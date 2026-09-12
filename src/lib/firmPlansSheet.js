@@ -29,6 +29,8 @@ function applyFirmSheetMeta(firm, meta = {}) {
     ...(meta.verifiedBy ? { verifiedBy: meta.verifiedBy } : {}),
     ...(typeof meta.isPopular === 'boolean' ? { isPopular: meta.isPopular } : {}),
     ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
+    ...(typeof meta.rating === 'number' ? { rating: meta.rating } : {}),
+    ...(typeof meta.reviews === 'number' ? { reviews: meta.reviews } : {}),
   };
 }
 
@@ -63,6 +65,8 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
         ...(meta.verifiedBy ? { verifiedBy: meta.verifiedBy } : {}),
         ...(typeof meta.isPopular === 'boolean' ? { isPopular: meta.isPopular } : {}),
         ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
+        ...(typeof meta.rating === 'number' ? { rating: meta.rating } : {}),
+        ...(typeof meta.reviews === 'number' ? { reviews: meta.reviews } : {}),
         accountSizes: sizes,
         steps,
         priceType: priceTypes,
@@ -97,6 +101,8 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
         isNew: true,
         isPopular: Boolean(meta.isPopular),
         ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
+        ...(typeof meta.rating === 'number' ? { rating: meta.rating } : {}),
+        ...(typeof meta.reviews === 'number' ? { reviews: meta.reviews } : {}),
         comingSoon: false,
         plans,
       });

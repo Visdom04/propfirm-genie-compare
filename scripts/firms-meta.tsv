@@ -1,24 +1,24 @@
-Firm	Affiliate Link	Last Verified	Verified By	isPopular	Max Allocation
-Lucid Trading	https://lucidtrading.com/?ref=KAGE	2026-09-09	Prop Firm Compare	true	$750,000
-Tradeify	https://tradeify.co/?ref=KAGE	2026-08-28	ops	true	$150K
-Apex Trader Funding	https://apextraderfunding.com/?c=KAGE	2026-08-28	ops	true	$150K
-My Funded Futures	https://myfundedfutures.com/?ref=KAGE	2026-08-28	ops	true	$150K
-Take Profit Trader	https://takeprofittrader.com/?referralCode=KAGE	2026-08-28	ops	false	$150K
-FundedNext Futures	https://fundednext.com/?fpr=KAGE	2026-08-28	ops	false	$500K
-IQ Capital	https://www.iqcapital.io/	2026-09-09	Prop Firm Compare	false	$2,000,000
-Topstep	https://www.topstep.com/	2026-08-25	Prop Firm Compare	false	$750,000
-Traders Launch	https://traderslaunch.com/	2026-04-20	Prop Firm Compare	false	$1,500,000
-Top One Futures				true	$150K
-Purdia				true	$100K
-YRM Prop				false	$150K
-Bulenox				false	$250K
-Phidias Propfirm				false	$200K
-Legends Trading				false	$750K
-E8 Futures				true	5 Funded
-Blue Guardian				true	$150K
-Nexgen ProTrader Funding				false	$150K
-DayTraders				true	$300K
-Funded Futures Network				false	—
-The Trading Pit				false	—
-FundedSeat				false	—
-FTMO				false	—
+Firm	Affiliate Link	Last Verified	Verified By	isPopular	Max Allocation	Rating	Reviews
+Lucid Trading	https://lucidtrading.com/?ref=KAGE	2026-09-09	Prop Firm Compare	true	$750,000	4.7	323
+Tradeify	https://tradeify.co/?ref=KAGE	2026-08-28	ops	true	$150K	4.7	175
+Apex Trader Funding	https://apextraderfunding.com/?c=KAGE	2026-08-28	ops	true	$150K	3.8	117
+My Funded Futures	https://myfundedfutures.com/?ref=KAGE	2026-08-28	ops	true	$150K	4.5	244
+Take Profit Trader	https://takeprofittrader.com/?referralCode=KAGE	2026-08-28	ops	false	$150K	3.1	18
+FundedNext Futures	https://fundednext.com/?fpr=KAGE	2026-08-28	ops	false	$500K	4.4	75
+IQ Capital	https://www.iqcapital.io/	2026-09-09	Prop Firm Compare	false	$2,000,000	0	0
+Topstep	https://www.topstep.com/	2026-08-25	Prop Firm Compare	false	$750,000	3.4	39
+Traders Launch	https://traderslaunch.com/	2026-04-20	Prop Firm Compare	false	$1,500,000	4.8	7
+Top One Futures				true	$150K	4.7	86
+Purdia				true	$100K	4.5	48
+YRM Prop				false	$150K	0	8
+Bulenox				false	$250K	4.1	175
+Phidias Propfirm				false	$200K	4.2	118
+Legends Trading				false	$750K	4.3	164
+E8 Futures				true	5 Funded	0	0
+Blue Guardian				true	$150K	0	0
+Nexgen ProTrader Funding				false	$150K	4.2	28
+DayTraders				true	$300K	4.3	42
+Funded Futures Network				false	—	0	0
+The Trading Pit				false	—	0	0
+FundedSeat				false	—	0	0
+FTMO				false	—	0	0

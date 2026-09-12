@@ -81,8 +81,12 @@ npm run sync:firms            # optional: bake into firms.js
 | Verified By | ops |
 | isPopular | true |
 | Max Allocation | $150K |
+| Rating | 4.7 |
+| Reviews | 323 |
 
-Do **not** add Rank, Reviews, Country, Years, or Platforms to this tab. Apps Script pushes the whole Firms sheet as TSV; keep it to these columns only. Those profile fields stay in `src/data/firms.js`.
+Do **not** add Rank, Country, Years, or Platforms to this tab. Apps Script pushes the whole Firms sheet as TSV. Those fields stay in `src/data/firms.js`.
+
+**Rating** is 0–5 (one decimal is fine). **Reviews** is the count only (`323`, not `323 reviews`). Blank cell = leave the last known value. `0` is a real value (shows as no reviews).
 
 ## Weekly ops workflow
 

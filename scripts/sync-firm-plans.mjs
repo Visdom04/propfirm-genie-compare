@@ -286,6 +286,12 @@ function applyFirmMeta(block, meta) {
       next = next.replace(/maxAlloc:\s*(?:'[^']*'|"[^"]*")/, `maxAlloc: ${jsString(meta.maxAlloc)}`);
     }
   }
+  if (typeof meta.rating === 'number') {
+    next = next.replace(/rating:\s*[\d.]+/, `rating: ${meta.rating}`);
+  }
+  if (typeof meta.reviews === 'number') {
+    next = next.replace(/reviews:\s*\d+/, `reviews: ${meta.reviews}`);
+  }
   return next;
 }
 
@@ -360,6 +366,8 @@ async function main() {
     if (sheetMeta?.lastVerified) meta.lastVerified = sheetMeta.lastVerified;
     if (sheetMeta?.verifiedBy) meta.verifiedBy = sheetMeta.verifiedBy;
     if (sheetMeta?.maxAlloc) meta.maxAlloc = sheetMeta.maxAlloc;
+    if (typeof sheetMeta?.rating === 'number') meta.rating = sheetMeta.rating;
+    if (typeof sheetMeta?.reviews === 'number') meta.reviews = sheetMeta.reviews;
     for (const p of plans) p.popularity = meta.likes;
     const block = serializeFirm(meta, plans, 2);
     const insertAt = src.lastIndexOf('\n];');

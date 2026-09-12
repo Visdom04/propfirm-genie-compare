@@ -38,7 +38,7 @@ export const EXTENDED_HEADERS = [
   'Price Note',
 ];
 
-/** Firms tab only — do not add Rank / Reviews / Country / Years / Platforms (Apps Script dumps this tab as TSV). */
+/** Firms tab only — do not add Rank / Country / Years / Platforms. */
 export const FIRMS_META_HEADERS = [
   'Firm',
   'Affiliate Link',
@@ -46,6 +46,8 @@ export const FIRMS_META_HEADERS = [
   'Verified By',
   'isPopular',
   'Max Allocation',
+  'Rating',
+  'Reviews',
 ];
 
 export const ACCOUNT_CATEGORIES = new Set(['Challenge', 'S2F']);
@@ -186,6 +188,15 @@ function parseBoolCell(raw) {
   return undefined;
 }
 
+function parseNumberCell(raw) {
+  const s = String(raw || '')
+    .trim()
+    .replace(/,/g, '');
+  if (!s) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 /** Header-driven Firms tab. Extra columns are ignored. */
 export function parseFirmsMetaTsv(text) {
   const lines = String(text || '')
@@ -202,12 +213,16 @@ export function parseFirmsMetaTsv(text) {
     const name = FIRM_NAME_MAP[firm] || firm;
     const isPopular = parseBoolCell(col(cols, idxMap, 'isPopular', 4));
     const maxAlloc = col(cols, idxMap, 'Max Allocation', 5);
+    const rating = parseNumberCell(col(cols, idxMap, 'Rating', 6));
+    const reviews = parseNumberCell(col(cols, idxMap, 'Reviews', 7));
     map.set(name, {
       affiliateLink: col(cols, idxMap, 'Affiliate Link', 1) || undefined,
       lastVerified: col(cols, idxMap, 'Last Verified', 2) || undefined,
       verifiedBy: col(cols, idxMap, 'Verified By', 3) || undefined,
       ...(typeof isPopular === 'boolean' ? { isPopular } : {}),
       ...(maxAlloc ? { maxAlloc } : {}),
+      ...(typeof rating === 'number' ? { rating } : {}),
+      ...(typeof reviews === 'number' ? { reviews } : {}),
     });
   }
   return map;
