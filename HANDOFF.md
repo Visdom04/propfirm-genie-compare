@@ -37,7 +37,7 @@ Nav labels: Challenges · Firms · Overview · Head to head (`src/components/gre
 - Hand-edit plan rows in `src/data/firms.js`.
 - Concatenate every plan’s raw payout cell onto Overview (that is what made Apex/Tradeify/FundedNext unreadable).
 - Put a Price / KAGE CTA on the Overview pin. Price belongs on Challenges (per plan) and still appears as Eval / All-in mid-columns on Overview.
-- Rename sheet headers (`Payout Freq.`, `List Price`, `Discount %`, `Promo CODE`, …).
+- Rename sheet headers (`Payout Freq.`, `List Price`, `Discount %`, `Promo CODE`, `Max Allocation`, …).
 - Commit contractor PDFs, `PROPFIRM_LOGO/`, or `demo-2-handoff/` (stale — it still talks about `/demo-2`).
 
 ## Copy these files
@@ -110,7 +110,7 @@ Logos: `src/lib/firmLogos.js` points at Supabase `genie-assets`. Local fallbacks
 Two Google Sheet tabs:
 
 1. **Plans** → `scripts/firm-plans.tsv` — one row = one plan + account size.
-2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`.
+2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`, **Max Allocation**. Do not add rank / reviews / country / years / platforms.
 
 After any sheet change:
 

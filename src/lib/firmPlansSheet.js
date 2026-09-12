@@ -4,9 +4,9 @@ import { firms as staticFirms } from '@/data/firms';
 import { firmLogo } from '@/lib/firmLogos';
 import {
   parseTsv,
+  parseFirmsMetaTsv,
   validateFirmPlans,
   rowToPlan,
-  FIRM_NAME_MAP,
 } from '../../scripts/lib/firm-plans-parser.mjs';
 
 export const FIRMS_SHEET_TAG = 'firms-sheet';
@@ -20,25 +20,16 @@ function withoutHiddenFirms(firms) {
 
 const CATALOG_PATH = path.join('/tmp', 'propfirm-firms-catalog.json');
 
-function parseFirmsMetaTsv(text) {
-  const lines = String(text || '')
-    .split(/\r?\n/)
-    .filter(l => l.trim());
-  const map = new Map();
-  if (lines.length < 2) return map;
-  for (let i = 1; i < lines.length; i += 1) {
-    const cols = lines[i].split('\t');
-    const firm = cols[0]?.trim();
-    if (!firm) continue;
-    const name = FIRM_NAME_MAP[firm] || firm;
-    map.set(name, {
-      affiliateLink: cols[1]?.trim() || undefined,
-      lastVerified: cols[2]?.trim() || undefined,
-      verifiedBy: cols[3]?.trim() || undefined,
-      isPopular: /^true$/i.test(cols[4]?.trim() || ''),
-    });
-  }
-  return map;
+function applyFirmSheetMeta(firm, meta = {}) {
+  if (!meta || !Object.keys(meta).length) return firm;
+  return {
+    ...firm,
+    ...(meta.affiliateLink ? { affiliateLink: meta.affiliateLink } : {}),
+    ...(meta.lastVerified ? { lastVerified: meta.lastVerified } : {}),
+    ...(meta.verifiedBy ? { verifiedBy: meta.verifiedBy } : {}),
+    ...(typeof meta.isPopular === 'boolean' ? { isPopular: meta.isPopular } : {}),
+    ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
+  };
 }
 
 function mergeSheetIntoFirms(parsedPlans, metaMap) {
@@ -71,6 +62,7 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
         ...(meta.lastVerified ? { lastVerified: meta.lastVerified } : {}),
         ...(meta.verifiedBy ? { verifiedBy: meta.verifiedBy } : {}),
         ...(typeof meta.isPopular === 'boolean' ? { isPopular: meta.isPopular } : {}),
+        ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
         accountSizes: sizes,
         steps,
         priceType: priceTypes,
@@ -104,6 +96,7 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
         allocPct: 0.5,
         isNew: true,
         isPopular: Boolean(meta.isPopular),
+        ...(meta.maxAlloc ? { maxAlloc: meta.maxAlloc } : {}),
         comingSoon: false,
         plans,
       });
@@ -111,7 +104,7 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
   }
 
   for (const f of staticFirms) {
-    if (!byFirm.has(f.name)) result.push(f);
+    if (!byFirm.has(f.name)) result.push(applyFirmSheetMeta(f, metaMap.get(f.name)));
   }
 
   return result;

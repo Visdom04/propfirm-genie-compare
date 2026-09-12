@@ -1,6 +1,6 @@
 # Firm data pipeline (Google Sheet → site)
 
-This pack’s product + agent instructions: see repo-root [`HANDOFF.md`](../HANDOFF.md).
+Four-page product + agent instructions: see repo-root [`HANDOFF.md`](../HANDOFF.md).
 
 This repo treats **the sheet as source of truth** for plan economics. The site reads generated `src/data/firms.js` — never edit plan rows in `firms.js` by hand.
 
@@ -80,6 +80,9 @@ npm run sync:firms            # optional: bake into firms.js
 | Last Verified | 2026-08-28 |
 | Verified By | ops |
 | isPopular | true |
+| Max Allocation | $150K |
+
+Do **not** add Rank, Reviews, Country, Years, or Platforms to this tab. Apps Script pushes the whole Firms sheet as TSV; keep it to these columns only. Those profile fields stay in `src/data/firms.js`.
 
 ## Weekly ops workflow
 

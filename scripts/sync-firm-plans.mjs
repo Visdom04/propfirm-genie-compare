@@ -7,8 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  FIRM_NAME_MAP,
   loadFirmPlans,
+  parseFirmsMetaTsv,
   rowToPlan,
 } from './lib/firm-plans-parser.mjs';
 
@@ -138,21 +138,7 @@ const NEW_FIRM_META = {
 
 function loadFirmMeta() {
   if (!fs.existsSync(metaPath)) return new Map();
-  const lines = fs.readFileSync(metaPath, 'utf8').split(/\r?\n/).filter(Boolean);
-  const map = new Map();
-  for (let i = 1; i < lines.length; i += 1) {
-    const cols = lines[i].split('\t');
-    const firm = cols[0]?.trim();
-    if (!firm) continue;
-    const name = FIRM_NAME_MAP[firm] || firm;
-    map.set(name, {
-      affiliateLink: cols[1]?.trim() || undefined,
-      lastVerified: cols[2]?.trim() || undefined,
-      verifiedBy: cols[3]?.trim() || undefined,
-      isPopular: /^true$/i.test(cols[4]?.trim()),
-    });
-  }
-  return map;
+  return parseFirmsMetaTsv(fs.readFileSync(metaPath, 'utf8'));
 }
 
 function jsString(s) {
@@ -295,6 +281,11 @@ function applyFirmMeta(block, meta) {
   if (typeof meta.isPopular === 'boolean') {
     next = next.replace(/isPopular:\s*(true|false)/, `isPopular: ${meta.isPopular}`);
   }
+  if (meta.maxAlloc) {
+    if (/maxAlloc:/.test(next)) {
+      next = next.replace(/maxAlloc:\s*(?:'[^']*'|"[^"]*")/, `maxAlloc: ${jsString(meta.maxAlloc)}`);
+    }
+  }
   return next;
 }
 
@@ -368,6 +359,7 @@ async function main() {
     if (sheetMeta?.affiliateLink) meta.affiliateLink = sheetMeta.affiliateLink;
     if (sheetMeta?.lastVerified) meta.lastVerified = sheetMeta.lastVerified;
     if (sheetMeta?.verifiedBy) meta.verifiedBy = sheetMeta.verifiedBy;
+    if (sheetMeta?.maxAlloc) meta.maxAlloc = sheetMeta.maxAlloc;
     for (const p of plans) p.popularity = meta.likes;
     const block = serializeFirm(meta, plans, 2);
     const insertAt = src.lastIndexOf('\n];');
