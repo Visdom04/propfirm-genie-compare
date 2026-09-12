@@ -5,6 +5,8 @@ import { BRAND_NAME } from '@/lib/brand';
 import { firmLogo } from '@/lib/firmLogos';
 import { listPriceOf, salePriceOf } from '@/lib/planPrice';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: `Compare Head to Head | ${BRAND_NAME}`,
   description:

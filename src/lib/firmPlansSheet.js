@@ -156,9 +156,6 @@ export function saveFirmsCatalog(payload) {
 }
 
 export function readFirmsCatalog() {
-  if (globalThis.__propfirmFirmsCatalog?.firms?.length) {
-    return globalThis.__propfirmFirmsCatalog;
-  }
   try {
     if (fs.existsSync(CATALOG_PATH)) {
       const raw = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
@@ -168,6 +165,9 @@ export function readFirmsCatalog() {
   } catch {
     // ignore corrupt cache
   }
+  // Long-lived `next dev` used to keep a process cache after /tmp was gone,
+  // which hid Firms-tab edits (reviews / rating / max allocation).
+  globalThis.__propfirmFirmsCatalog = null;
   return null;
 }
 
@@ -175,15 +175,37 @@ export function isSheetSyncConfigured() {
   return Boolean(process.env.SYNC_SECRET);
 }
 
+function firmsMetaTsvPath() {
+  return path.join(process.cwd(), 'scripts', 'firms-meta.tsv');
+}
+
+function overlayLocalFirmMeta(firms) {
+  try {
+    const file = firmsMetaTsvPath();
+    if (!fs.existsSync(file)) return firms;
+    const metaMap = parseFirmsMetaTsv(fs.readFileSync(file, 'utf8'));
+    if (!metaMap.size) return firms;
+    return firms.map(f => applyFirmSheetMeta(f, metaMap.get(f.name) || {}));
+  } catch {
+    return firms;
+  }
+}
+
 export async function getRuntimeFirms() {
   const live = readFirmsCatalog();
-  if (live?.firms?.length) {
-    return {
-      firms: withoutHiddenFirms(live.firms),
-      source: live.source || 'google-sheet-push',
-      syncedAt: live.syncedAt || null,
-      error: null,
-    };
+  const fromSheetPush = Boolean(live?.firms?.length);
+  let firms = fromSheetPush ? live.firms : staticFirms;
+  // Dev: overlay scripts/firms-meta.tsv so Rating/Reviews/Max Allocation
+  // show even if a stale Apps Script catalog is sitting in /tmp.
+  // Production: the Google push is source of truth — do not let the last
+  // git TSV overwrite a successful sync.
+  if (!fromSheetPush || process.env.NODE_ENV !== 'production') {
+    firms = overlayLocalFirmMeta(firms);
   }
-  return { firms: withoutHiddenFirms(staticFirms), source: 'static', syncedAt: null, error: null };
+  return {
+    firms: withoutHiddenFirms(firms),
+    source: fromSheetPush ? live.source || 'google-sheet-push' : 'static',
+    syncedAt: live?.syncedAt || null,
+    error: null,
+  };
 }

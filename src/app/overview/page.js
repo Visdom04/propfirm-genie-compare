@@ -3,6 +3,8 @@ import FirmOverviewTable from '@/components/FirmOverviewTable';
 import { FocusWord } from '@/components/green/PfgControls';
 import { getRuntimeFirms } from '@/lib/firmPlansSheet';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Prop Firm Overview',
   description: 'One row per firm — sizes, ratings, platforms, eval cost, and payout rules.',

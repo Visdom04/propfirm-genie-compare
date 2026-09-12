@@ -1174,7 +1174,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                                 </span>
                                 <RatingStars rating={f.rating} idPrefix={`ov-${slugify(f.name)}`} />
                                 <span className="shrink-0 text-[0.72rem] font-bold tabular-nums text-[#3FB185]">
-                                  [{f.reviews}]
+                                  [{Number(f.reviews).toLocaleString('en-US')}]
                                 </span>
                               </>
                             )}

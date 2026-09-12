@@ -5,7 +5,7 @@ import GreenPageShell from '@/components/green/GreenPageShell';
 import { FocusWord } from '@/components/green/PfgControls';
 
 /** Digi Green challenges table */
-export default function DemoHero() {
+export default function DemoHero({ firms }) {
   return (
     <GreenPageShell>
       <section
@@ -25,7 +25,7 @@ export default function DemoHero() {
             Filter by size, steps, and price — rules, drawdown, and KAGE pricing in one table.
           </p>
         </header>
-        <FirmCompareDemoGreen />
+        <FirmCompareDemoGreen firms={firms} />
       </section>
     </GreenPageShell>
   );

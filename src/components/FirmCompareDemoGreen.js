@@ -3,7 +3,7 @@
 import { createPortal } from 'react-dom';
 import { useMemo, useState, useCallback, useEffect, useRef, useId } from 'react';
 import { Bookmark, Star } from 'lucide-react';
-import { firms, ACCOUNT_SIZE_OPTIONS, PRICE_OPTIONS } from '@/data/firms';
+import { firms as staticFirms, ACCOUNT_SIZE_OPTIONS, PRICE_OPTIONS } from '@/data/firms';
 import CompareFilterSidebar, {
   createEmptyFacet,
   cloneFacet,
@@ -250,13 +250,13 @@ function formatMultiLabel(selected, fallback) {
   return 'Multiple';
 }
 
-function computeFilterBounds() {
+function computeFilterBounds(catalog) {
   const prices = [];
   const splits = [];
   const ratings = [];
   const years = [];
   const drawdown = new Set();
-  firms.forEach(f => {
+  catalog.forEach(f => {
     ratings.push(Number(f.rating) || 0);
     years.push(Number(f.years) || 0);
     (f.plans || []).forEach(p => {
@@ -286,9 +286,6 @@ function computeFilterBounds() {
     drawdownTypes: ['EOD', 'Intraday', 'Static', 'Trailing'].filter(t => drawdown.has(t)),
   };
 }
-
-const FILTER_BOUNDS = computeFilterBounds();
-const EMPTY_FACET = createEmptyFacet(FILTER_BOUNDS);
 
 function formatMoney(n) {
   const v = Number(n);
@@ -339,11 +336,13 @@ function RatingChip({ rating, reviews, idPrefix }) {
   return (
     <span
       className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#3FB185]/35 bg-[#3FB185]/10 px-2 py-[3px]"
-      aria-label={`Rated ${rating} from ${reviews} reviews`}
+      aria-label={`Rated ${rating} from ${Number(reviews).toLocaleString('en-US')} reviews`}
     >
       <span className="shrink-0 text-[0.72rem] font-bold tabular-nums text-white">{Number(rating).toFixed(1)}</span>
       <RatingStars rating={rating} idPrefix={idPrefix} />
-      <span className="shrink-0 text-[0.68rem] font-bold tabular-nums text-[#3FB185]">[{reviews}]</span>
+      <span className="shrink-0 text-[0.68rem] font-bold tabular-nums text-[#3FB185]">
+        [{Number(reviews).toLocaleString('en-US')}]
+      </span>
     </span>
   );
 }
@@ -879,13 +878,15 @@ function TableScrollSlider({ getMidPanes, masterRef }) {
   );
 }
 
-export default function FirmCompareDemo() {
+export default function FirmCompareDemo({ firms = staticFirms }) {
+  const filterBounds = useMemo(() => computeFilterBounds(firms), [firms]);
+  const emptyFacet = useMemo(() => createEmptyFacet(filterBounds), [filterBounds]);
   const [topMode, setTopMode] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [favorites, setFavorites] = useState(() => new Set());
-  const [facet, setFacet] = useState(() => cloneFacet(EMPTY_FACET));
-  const [draft, setDraft] = useState(() => cloneFacet(EMPTY_FACET));
+  const [facet, setFacet] = useState(() => cloneFacet(createEmptyFacet(computeFilterBounds(firms))));
+  const [draft, setDraft] = useState(() => cloneFacet(createEmptyFacet(computeFilterBounds(firms))));
   const [applyDiscount, setApplyDiscount] = useState(true);
   const [search, setSearch] = useState('');
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -971,25 +972,25 @@ export default function FirmCompareDemo() {
 
   const uniqueCountries = useMemo(
     () => [...new Set(firms.map(f => f.countryCode).filter(Boolean))].sort(),
-    []
+    [firms]
   );
   const uniquePlatforms = useMemo(() => {
     const s = new Set();
     firms.forEach(f => (f.platforms || []).forEach(p => s.add(p)));
     return [...s].sort();
-  }, []);
+  }, [firms]);
   const firmList = useMemo(
     () =>
       [...firms]
         .filter(f => (f.plans || []).length)
         .sort((a, b) => firmOrderIndex(a.name) - firmOrderIndex(b.name)),
-    []
+    [firms]
   );
   const availableSizes = useMemo(() => {
     const present = new Set();
     firms.forEach(f => (f.plans || []).forEach(p => present.add(p.accountSize)));
     return ACCOUNT_SIZE_OPTIONS.filter(s => present.has(s));
-  }, []);
+  }, [firms]);
 
   const filterOptions = useMemo(
     () => ({
@@ -997,11 +998,11 @@ export default function FirmCompareDemo() {
       sizes: availableSizes,
       steps: STEP_FILTER_OPTIONS,
       priceTypes: PRICE_OPTIONS,
-      drawdownTypes: FILTER_BOUNDS.drawdownTypes,
+      drawdownTypes: filterBounds.drawdownTypes,
       platforms: uniquePlatforms,
       countries: uniqueCountries,
     }),
-    [uniquePlatforms, uniqueCountries, availableSizes]
+    [uniquePlatforms, uniqueCountries, availableSizes, filterBounds]
   );
 
   useEffect(() => {
@@ -1079,13 +1080,13 @@ export default function FirmCompareDemo() {
   }, [draft]);
 
   const resetFacets = useCallback(() => {
-    const empty = cloneFacet(EMPTY_FACET);
+    const empty = cloneFacet(emptyFacet);
     setDraft(empty);
     setFacet(empty);
     setSearch('');
     setOpenDropdown(null);
     setSort({ key: 'default', dir: 'asc' });
-  }, []);
+  }, [emptyFacet]);
 
   const toggleMulti = useCallback(
     (key, value) => {
@@ -1149,14 +1150,14 @@ export default function FirmCompareDemo() {
     if (facet.countries.length) {
       rows = rows.filter(r => facet.countries.includes(r.firm.countryCode));
     }
-    if (isRangeActive(facet.priceRange, FILTER_BOUNDS.price)) {
+    if (isRangeActive(facet.priceRange, filterBounds.price)) {
       const { min, max } = facet.priceRange;
       rows = rows.filter(r => {
         const price = applyDiscount ? salePriceOf(r.plan) : listPriceOf(r.plan);
         return price >= min && price <= max;
       });
     }
-    if (isRangeActive(facet.splitRange, FILTER_BOUNDS.split)) {
+    if (isRangeActive(facet.splitRange, filterBounds.split)) {
       const { min, max } = facet.splitRange;
       rows = rows.filter(r => {
         const split =
@@ -1166,14 +1167,14 @@ export default function FirmCompareDemo() {
         return split >= min && split <= max;
       });
     }
-    if (isRangeActive(facet.ratingRange, FILTER_BOUNDS.rating)) {
+    if (isRangeActive(facet.ratingRange, filterBounds.rating)) {
       const { min, max } = facet.ratingRange;
       rows = rows.filter(r => {
         const rating = Number(r.firm.rating) || 0;
         return rating >= min && rating <= max;
       });
     }
-    if (isRangeActive(facet.yearsRange, FILTER_BOUNDS.years)) {
+    if (isRangeActive(facet.yearsRange, filterBounds.years)) {
       const { min, max } = facet.yearsRange;
       rows = rows.filter(r => {
         const y = Number(r.firm.years) || 0;
@@ -1184,7 +1185,7 @@ export default function FirmCompareDemo() {
     const mul = sort.dir === 'desc' ? -1 : 1;
     const isDefaultSort = !sort.key || sort.key === 'default';
     const hasBrowseFilters =
-      topMode === 'favorites' || Boolean(search.trim()) || countActiveFilters(facet, FILTER_BOUNDS) > 0;
+      topMode === 'favorites' || Boolean(search.trim()) || countActiveFilters(facet, filterBounds) > 0;
 
     if (isDefaultSort && !hasBrowseFilters) {
       return buildCuratedDefaultRows(rows);
@@ -1207,7 +1208,7 @@ export default function FirmCompareDemo() {
     });
 
     return rows;
-  }, [topMode, favorites, facet, sort, search, applyDiscount]);
+  }, [topMode, favorites, facet, sort, search, applyDiscount, firms, filterBounds]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = useMemo(() => buildPageItems(page, totalPages), [page, totalPages]);
@@ -1260,8 +1261,8 @@ export default function FirmCompareDemo() {
   }, [applyMidScroll]);
 
   const favCount = favorites.size;
-  const activeFilterCount = countActiveFilters(facet, FILTER_BOUNDS);
-  const draftFilterCount = countActiveFilters(draft, FILTER_BOUNDS);
+  const activeFilterCount = countActiveFilters(facet, filterBounds);
+  const draftFilterCount = countActiveFilters(draft, filterBounds);
 
   return (
     <div className="relative w-full font-[family-name:var(--font-body)]">
@@ -1269,7 +1270,7 @@ export default function FirmCompareDemo() {
         <CompareFilterSidebar
           open={sidebarOpen}
           draft={draft}
-          bounds={FILTER_BOUNDS}
+          bounds={filterBounds}
           options={filterOptions}
           firmList={firmList}
           onChange={applyDraftFacet}

@@ -3,6 +3,8 @@ import FirmDirectoryTable from '@/components/green/FirmDirectoryTable';
 import { FocusWord } from '@/components/green/PfgControls';
 import { getRuntimeFirms } from '@/lib/firmPlansSheet';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Browse Prop Firms',
   description: 'Ratings, platforms, allocation, and promo codes in one ranked directory.',

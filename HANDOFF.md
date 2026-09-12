@@ -152,10 +152,7 @@ If Overview looks wrong, fix the **sheet cell** or `compactPayout()` — do not 
 
 **Runtime vs baked data**
 
-- Challenges (`FirmCompareDemoGreen`) currently imports **baked** `@/data/firms`.
-- Overview, directory, H2H use `getRuntimeFirms()` (live `/tmp` catalog if a sheet push ran, else baked `firms.js`).
-
-When wiring into PFG, prefer one catalog for all four pages so a sheet sync updates everything.
+All four pages load `getRuntimeFirms()`. Live Apps Script push (`/tmp` catalog) wins. Otherwise the site overlays `scripts/firms-meta.tsv` on baked `firms.js` (ratings, reviews, max allocation, affiliate). Challenges no longer hard-imports `firms.js`.
 
 ## View firm URLs
 
