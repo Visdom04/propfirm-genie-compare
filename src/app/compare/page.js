@@ -6,9 +6,9 @@ import { firmLogo } from '@/lib/firmLogos';
 import { listPriceOf, salePriceOf } from '@/lib/planPrice';
 
 export const metadata = {
-  title: `Compare Prop Firms Side by Side | ${BRAND_NAME}`,
+  title: `Compare Head to Head | ${BRAND_NAME}`,
   description:
-    'Head-to-head prop firm comparison. Pick two firms, account types, and sizes — see costs, drawdowns, profit splits, and rules with per-row highlights.',
+    'Pick two firms, account types, and sizes — see costs, drawdowns, profit splits, and rules with per-row highlights.',
 };
 
 function toCompareFirm(firm) {

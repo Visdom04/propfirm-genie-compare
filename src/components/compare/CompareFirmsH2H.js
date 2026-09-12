@@ -699,13 +699,11 @@ export default function CompareFirmsH2H({ firms = [], popularPairs = [] }) {
       <div className="relative z-1 mx-auto w-[min(1140px,calc(100%-32px))] px-0 pb-8 pt-12">
         <header className="mb-10 text-center">
           <h1 className="mb-4 text-[clamp(1.85rem,4.4vw,3rem)] font-bold leading-[1.12] tracking-tight text-white">
-            Compare Top Prop
-            <FocusWord>Firms</FocusWord>
-            Side By Side
+            Compare
+            <FocusWord>Head to Head</FocusWord>
           </h1>
           <p className="mx-auto m-0 max-w-xl text-[15px] leading-relaxed text-white/70">
-            Easily evaluate funding programs, rules, and more information from trusted prop firms — all in one
-            transparent comparison view.
+            Pick two firms, then account type and size — costs, drawdowns, splits, and rules side by side.
           </p>
         </header>
 

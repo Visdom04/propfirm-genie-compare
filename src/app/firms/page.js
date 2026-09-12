@@ -4,8 +4,8 @@ import { FocusWord } from '@/components/green/PfgControls';
 import { getRuntimeFirms } from '@/lib/firmPlansSheet';
 
 export const metadata = {
-  title: 'DEGENIE — Prop Firm Directory',
-  description: 'Browse verified futures prop firms, ratings, platforms, allocation, and promo codes.',
+  title: 'Browse Prop Firms',
+  description: 'Ratings, platforms, allocation, and promo codes in one ranked directory.',
 };
 
 export default async function FirmsPage() {

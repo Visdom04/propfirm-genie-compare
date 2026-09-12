@@ -190,11 +190,13 @@ H1: Compare Prop **Challenges**. Pin columns: Firm + Price (sale, strikethrough,
 
 `FirmDirectoryTable` inside `GreenPageShell`. One row per firm, ranked.
 
+H1: Browse Prop **Firms**.
+
 ### `/overview`
 
 `FirmOverviewTable` + `summarizeFirm()` in `firmOverview.js`.
 
-Pin: Firm (left) · **View firm** (right). No Price pin.
+H1: Prop Firm **Overview**. Pin: Firm (left) · **View firm** (right). No Price pin.
 
 Mid: account size range, plan types, platforms, S2F, eval from, activation, all-in, drawdown, max loss, days to pass, news, split, **compact payout**, max funded, discount, overview blurb.
 
@@ -203,6 +205,8 @@ Spotlight two names → link to `/compare?...`.
 ### `/compare`
 
 `CompareFirmsH2H`. Query picks two firms + plan/size. Highlights use extended sheet columns (Account Category, Min Trading Days, Daily Drawdown, News Trading, List Price, Discount %).
+
+H1: Compare **Head to Head**.
 
 ## Wiring into propfirmgenie.com
 
