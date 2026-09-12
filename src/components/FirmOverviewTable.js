@@ -717,7 +717,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
   const activeFilterCount = countActiveFilters(facet, bounds);
   const draftFilterCount = countActiveFilters(draft, bounds);
   const h2hHref =
-    spotA && spotB ? `/compare-firms?a=${slugify(spotA)}&b=${slugify(spotB)}` : null;
+    spotA && spotB ? `/compare?a=${slugify(spotA)}&b=${slugify(spotB)}` : null;
 
   const renderMid = (col, row) => {
     const style = { flex: `0 0 ${col.min}px`, minWidth: col.min };

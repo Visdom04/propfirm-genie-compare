@@ -9,11 +9,11 @@ Read **[HANDOFF.md](./HANDOFF.md)** first (written for a developer or a coding a
 | Route | What it is |
 |---|---|
 | `/challenges` | One row per challenge / plan + size |
-| `/demo-4` | Firm directory |
-| `/compare-page-2` | One row per firm (overview) |
-| `/compare-firms` | Head to head |
+| `/firms` | Firm directory |
+| `/overview` | One row per firm (overview) |
+| `/compare` | Head to head |
 
-`/` and `/demo-2` redirect to `/challenges`.
+`/` and `/demo-2` redirect to `/challenges`. Old demo URLs (`/demo-4`, `/compare-page-2`, `/compare-firms`) redirect to the names above.
 
 ## Run
 

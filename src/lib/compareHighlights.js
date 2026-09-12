@@ -1,4 +1,4 @@
-/** Head-to-head highlight helpers for /compare-firms */
+/** Head-to-head highlight helpers for /compare */
 
 export function parseMoney(value) {
   if (value == null || value === '') return null;

@@ -6,9 +6,9 @@ import { GENIE_LOGO } from '@/lib/firmLogos';
 
 const LINKS = [
   { href: '/challenges', label: 'Challenges' },
-  { href: '/demo-4', label: 'Firms' },
-  { href: '/compare-page-2', label: 'Overview' },
-  { href: '/compare-firms', label: 'Head to head' },
+  { href: '/firms', label: 'Firms' },
+  { href: '/overview', label: 'Overview' },
+  { href: '/compare', label: 'Head to head' },
 ];
 
 export default function SiteNav() {

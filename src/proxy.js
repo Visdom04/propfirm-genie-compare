@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 
 /** Public product pages in this handoff pack. */
-const LIVE = ['/challenges', '/demo-4', '/compare-firms', '/compare-page-2'];
+const LIVE = ['/challenges', '/firms', '/overview', '/compare'];
+const LEGACY = {
+  '/': '/challenges',
+  '/demo-2': '/challenges',
+  '/demo-4': '/firms',
+  '/compare-page-2': '/overview',
+  '/compare-firms': '/compare',
+};
 
 function isAllowed(pathname) {
   if (pathname === '/_not-found' || pathname === '/not-found') return true;
@@ -10,10 +17,11 @@ function isAllowed(pathname) {
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+  const dest = LEGACY[pathname];
 
-  if (pathname === '/' || pathname === '/demo-2') {
+  if (dest) {
     const url = request.nextUrl.clone();
-    url.pathname = '/challenges';
+    url.pathname = dest;
     return NextResponse.redirect(url);
   }
 
