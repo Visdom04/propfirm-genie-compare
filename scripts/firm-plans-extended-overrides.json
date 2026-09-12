@@ -1,0 +1,85 @@
+{
+  "_comment": "Starter values for extended compare cols. Ops verify against official rules before trusting green highlights. Keys: Firm name as in TSV (after FIRM_NAME_MAP). Optional planTypes map overrides firm defaults.",
+  "Lucid Trading": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none",
+    "planTypes": {
+      "Daily": { "minTradingDays": "2", "dailyDrawdown": "None", "newsTrading": "none" },
+      "Flex": { "minTradingDays": "None", "dailyDrawdown": "None", "newsTrading": "none" },
+      "Pro": { "minTradingDays": "None", "dailyDrawdown": "None", "newsTrading": "none" },
+      "Direct": { "minTradingDays": "None", "dailyDrawdown": "None", "newsTrading": "none" }
+    }
+  },
+  "Tradeify": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  },
+  "Take Profit Trader": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  },
+  "My Funded Futures": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  },
+  "Apex Trader Funding": {
+    "minTradingDays": "1",
+    "dailyDrawdown": "None",
+    "newsTrading": "both",
+    "planTypes": {
+      "Intraday Standard": { "minTradingDays": "1", "dailyDrawdown": "$1,000", "newsTrading": "both" },
+      "EOD Standard": { "minTradingDays": "1", "dailyDrawdown": "$1,000", "newsTrading": "both" },
+      "Intraday No Activation Fee": { "minTradingDays": "1", "dailyDrawdown": "$1,000", "newsTrading": "both" },
+      "EOD No Activation Fee": { "minTradingDays": "1", "dailyDrawdown": "$1,000", "newsTrading": "both" }
+    }
+  },
+  "Legends Trading": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "Phidias Propfirm": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "E8 Futures": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  },
+  "Nexgen ProTrader Funding": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "Bulenox": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "Purdia": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "YRM": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "none"
+  },
+  "DayTraders": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  },
+  "FundedNext": {
+    "minTradingDays": "None",
+    "dailyDrawdown": "None",
+    "newsTrading": "both"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "propfirm-genie-compare",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "validate:firms": "node scripts/validate-firm-plans.mjs",
+    "extend:firms": "node scripts/extend-firm-plans-cols.mjs",
+    "sync:firms": "node scripts/sync-firm-plans.mjs",
+    "data:firms": "npm run extend:firms -- --write && npm run validate:firms && npm run sync:firms"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "lucide-react": "^1.24.0",
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwindcss": "^4.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.2",
+    "typescript": "^6.0.3"
+  }
+}

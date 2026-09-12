@@ -1,0 +1,339 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-genie: #3FB185;
+  --color-genie-soft: #8fd4b8;
+  --color-genie-bright: #3FB185;
+  --color-genie-bg: #0a0f0d;
+  --color-genie-panel: #0c1612;
+  --color-pfg: #3FB185;
+  --color-pfg-deep: #1B4B38;
+  --color-pfg-deal: #4D65FF;
+  --animate-rise-in: rise-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes rise-in {
+    from,
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Native <button> chrome (white boxes / dots) — we skip Tailwind preflight
+   so existing CSS pages stay intact. Use this on unstyled icon/text buttons. */
+@utility btn-bare {
+  appearance: none;
+  background-color: transparent;
+  border-width: 0;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility range-thumb {
+  &::-webkit-slider-thumb {
+    pointer-events: auto;
+    appearance: none;
+    height: 14px;
+    width: 14px;
+    border-radius: 9999px;
+    background: #3FB185;
+    border: 2px solid #1B4B38;
+    box-shadow: 0 0 8px rgba(63, 177, 133, 0.4);
+  }
+  &::-moz-range-thumb {
+    pointer-events: auto;
+    appearance: none;
+    height: 14px;
+    width: 14px;
+    border-radius: 9999px;
+    background: #3FB185;
+    border: 2px solid #1B4B38;
+  }
+}
+
+:root {
+  /* ── Type tokens ──────────────────────────────────────────────── */
+  /* Font stack — geometric sans + editorial serif accent */
+  --font-display: var(--font-sans), 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    var(--font-sans), 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif:   var(--font-instrument), 'Instrument Serif', Georgia, 'Times New Roman', serif;
+
+  /* Fluid scale — display/editorial (hero + section heads) */
+  --type-hero:    clamp(2.5rem, 5.5vw + 0.6rem, 5rem);
+  --type-section: clamp(1.75rem, 2.8vw + 0.6rem, 2.75rem);
+  --type-card-h:  clamp(1.05rem, 1.2vw + 0.35rem, 1.3rem);
+  --type-body-lg: clamp(1rem, 0.9vw + 0.4rem, 1.15rem);
+  --type-body:    clamp(0.875rem, 0.5vw + 0.35rem, 1rem);
+  --type-label:   0.72rem;
+
+  /* Theme: purple → blue (indigo midpoint) */
+  --background: #05060f;
+  --foreground: #ffffff;
+
+  --demo-bg-deep: #05060f;
+  --demo-bg-mid: #0a0f24;
+  --demo-glow-core: #5b21b6;
+  --demo-glow-rich: #1e3a8a;
+  --demo-accent-lavender: #c4b5fd;
+  --demo-accent-lilac: #dbeafe;
+
+  --accent-purple: #a855f7;
+  --accent-blue: #3b82f6;
+  --accent-indigo: #6366f1;
+  --accent-cyan: #60a5fa;
+  --accent-teal: #818cf8;
+  --accent-pink: #e879f9;
+
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-700: #1e293b;
+  --slate-800: #0a0f24;
+  --slate-900: #05060f;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px);
+
+  /* Purple → blue gradients */
+  --gradient-primary: linear-gradient(135deg, #c4b5fd 0%, #a855f7 38%, #6366f1 68%, #3b82f6 100%);
+  --gradient-solid: linear-gradient(135deg, #e0e7ff 0%, #a855f7 40%, #4f46e5 72%, #2563eb 100%);
+  --gradient-vibrant: linear-gradient(180deg, #ffffff 0%, #e0e7ff 38%, #93c5fd 100%);
+  --gradient-headline: linear-gradient(180deg, #ffffff 0%, #ddd6fe 34%, #818cf8 62%, #60a5fa 100%);
+  --gradient-card-glass: linear-gradient(
+    145deg,
+    rgba(91, 33, 182, 0.26) 0%,
+    rgba(79, 70, 229, 0.16) 40%,
+    rgba(30, 58, 138, 0.22) 70%,
+    rgba(5, 6, 15, 0.55) 100%
+  );
+  --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+
+  /* Trustpilot accent (reviews + FAQ) */
+  --tp-green: #00b67a;
+  --tp-green-mid: #00a06b;
+  --tp-green-bright: #2dd4a0;
+  --tp-green-dim: rgba(0, 182, 122, 0.22);
+  --tp-green-glow: rgba(0, 182, 122, 0.38);
+  --tp-gradient: linear-gradient(90deg, #34d399 0%, #00b67a 48%, #10b981 100%);
+  --tp-gradient-soft: linear-gradient(135deg, #6ee7b7 0%, #00b67a 55%, #059669 100%);
+
+  /* Glow Effects */
+  --glow-purple: 0 0 48px rgba(168, 85, 247, 0.38);
+  --glow-cyan: 0 0 40px rgba(96, 165, 250, 0.3);
+  --glow-blue: 0 0 40px rgba(59, 130, 246, 0.4);
+}
+
+/* Avoid padding/margin on * — that beats Tailwind @layer utilities and
+   kills every px-*, mx-auto, gap-adjacent spacing utility on Tailwind pages. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-text {
+  background: var(--gradient-solid);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-vibrant-text {
+  background: var(--gradient-vibrant);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.3));
+}
+
+.btn {
+  padding: 0.8rem 1.6rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: var(--gradient-vibrant);
+  color: white;
+  box-shadow: var(--glow-purple);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 50px rgba(99, 102, 241, 0.55);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 1.5px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: white;
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 12px; }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--slate-800);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-700);
+}
+
+.main-container {
+  overflow: hidden;
+}
+
+
+/* Background Blobs */
+.blobs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: var(--accent-purple);
+  filter: blur(150px);
+  opacity: 0.15;
+  border-radius: 50%;
+}
+
+.blob-1 {
+  top: -100px;
+  right: -100px;
+  background: var(--accent-cyan);
+}
+
+.blob-2 {
+  bottom: -100px;
+  left: -100px;
+  background: var(--accent-purple);
+}
+
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+}
