@@ -19,7 +19,20 @@ The Google Sheet is the source of truth for plan economics. The site must not in
 
 `/` and `/demo-2` redirect to `/challenges`. Old demo URLs also redirect: `/demo-4` → `/firms`, `/compare-page-2` → `/overview`, `/compare-firms` → `/compare`. Live allow-list lives in `src/proxy.js` (Next.js 16 — this repo uses `proxy.js`, not `middleware.js`).
 
-Nav labels: Challenges · Firms · Overview · Head to head (`src/components/green/SiteNav.js`).
+Nav labels in this pack: Challenges · Firms · Overview · Head to head (`src/components/green/SiteNav.js`). Those labels are for the demo. On propfirmgenie.com, keep the **existing production URLs** below.
+
+## Where these go on propfirmgenie.com
+
+This pack’s routes (`/challenges`, `/firms`, `/overview`, `/compare`) are the reference build on [propfirm-genie-two.vercel.app](https://propfirm-genie-two.vercel.app). They are **not** the production paths. Drop each table onto the PFG URL already in use:
+
+| This pack (reference) | Live PFG URL |
+|---|---|
+| [`/challenges`](https://propfirm-genie-two.vercel.app/challenges) | [propfirmgenie.com/deals-coupons](https://propfirmgenie.com/deals-coupons) |
+| [`/overview`](https://propfirm-genie-two.vercel.app/overview) | [propfirmgenie.com/compare-firms](https://propfirmgenie.com/compare-firms) |
+| [`/firms`](https://propfirm-genie-two.vercel.app/firms) | [propfirmgenie.com](https://propfirmgenie.com/) (homepage) |
+| [`/compare`](https://propfirm-genie-two.vercel.app/compare) | **No public nav today.** Head-to-head is opened from Overview when the user spots two firms (`/compare?a=…&b=…`). Optional: add a footer link. Do not put it in the main header unless product asks. |
+
+Do **not** copy this pack’s redirects onto PFG. Here `/` goes to Challenges and `/compare-firms` goes to Head to head. On PFG, `/` is the firm directory and `/compare-firms` is Overview.
 
 ## Agent rules (do / do not)
 
@@ -197,7 +210,7 @@ Affiliate / KAGE checkout stays on **Challenges** (per-plan Price pin) and direc
 
 ### `/challenges`
 
-`src/app/challenges/page.js` → `DemoHeroGreen` → `FirmCompareDemoGreen`.
+`src/app/challenges/page.js` → `DemoHeroGreen` → `FirmCompareDemoGreen`. On PFG this is **[ /deals-coupons ](https://propfirmgenie.com/deals-coupons)**.
 
 H1: Compare Prop **Challenges**. Pin columns: Firm (left) · Promo + **View Firm** (right). Mid columns include raw payout freq. Profit split and Price use a smaller numeral than the other mid cells (smaller again on mobile). Mobile Promo / View Firm is a compact sticky stack (`--cmp-cta` in `FirmCompareDemoGreen.edges.css`).
 
@@ -205,13 +218,13 @@ The list is **page-length** (the window scrolls). Body rows are **window-virtual
 
 ### `/firms`
 
-`FirmDirectoryTable` inside `GreenPageShell`. One row per firm, ranked.
+`FirmDirectoryTable` inside `GreenPageShell`. One row per firm, ranked. On PFG this is the **[ homepage ](https://propfirmgenie.com/)**.
 
 H1: Browse Prop **Firms**. Same page-length list as Challenges (`.dir-workbench { max-height: none }`, `.dir-board` is `overflow-x: auto; overflow-y: clip`). Filters + headers stick (`.dir-sticky-top`). Do not box the directory in `calc(100dvh …)`. Platforms: 3 marks + clickable **+N** (same `PlatformMarks` as Overview).
 
 ### `/overview`
 
-`FirmOverviewTable` + `summarizeFirm()` in `firmOverview.js`.
+`FirmOverviewTable` + `summarizeFirm()` in `firmOverview.js`. On PFG this is **[ /compare-firms ](https://propfirmgenie.com/compare-firms)**.
 
 H1: Prop Firm **Overview**. Pin: Firm (left) · **View firm** (right). No Price pin.
 
@@ -219,7 +232,7 @@ Page-length list + sticky chrome/headers, same rules as Challenges (`--ov-firm` 
 
 Mid: account size range, plan types, platforms, S2F, eval from, activation, all-in, drawdown, max loss, days to pass, news, split, **compact payout**, max funded, discount, overview blurb.
 
-Spotlight two names → link to `/compare?...`.
+Spotlight two names → link to `/compare?a=…&b=…`. That is the main way users reach Head to head.
 
 ### `/compare`
 
@@ -227,14 +240,18 @@ Spotlight two names → link to `/compare?...`.
 
 H1: Compare **Head to Head**.
 
+On PFG there is no header link for this page. Keep it that way: users arrive from Overview (spot two firms). A footer link is optional.
+
 ## Wiring into propfirmgenie.com
 
 1. Drop the file tree above into the PFG Next app (or a package). Keep `#3FB185` and `GreenPageShell` unless design says otherwise.
-2. Point `GENIE_FIRM_BASE` at production if the host is not `propfirmgenie.com`.
-3. Merge `GENIE_FIRM_SLUGS` with the CMS `firmSlug` field so View firm never 404s.
-4. Replace Challenges’ static `@/data/firms` import with the same `getRuntimeFirms()` (or PFG CMS) used elsewhere.
-5. Keep sheet headers identical if ops still edits Google Sheets. Later, same columns → Supabase 1:1 (`DATA-PIPELINE.md` “Later”).
-6. Promo code on Challenges CTAs is **KAGE** unless the plan row’s `Promo CODE` says otherwise.
+2. Mount pages on the **existing PFG URLs** (see the table above): `/deals-coupons` ← Challenges, `/compare-firms` ← Overview, `/` ← Firms directory, Head to head as `/compare` (from Overview; optional footer).
+3. Point `GENIE_FIRM_BASE` at production if the host is not `propfirmgenie.com`.
+4. Merge `GENIE_FIRM_SLUGS` with the CMS `firmSlug` field so View firm never 404s.
+5. Replace Challenges’ static `@/data/firms` import with the same `getRuntimeFirms()` (or PFG CMS) used elsewhere.
+6. Keep sheet headers identical if ops still edits Google Sheets. Later, same columns → Supabase 1:1 (`DATA-PIPELINE.md` “Later”).
+7. Promo code on Challenges CTAs is **KAGE** unless the plan row’s `Promo CODE` says otherwise.
+8. On the PFG host, add env **`SYNC_SECRET`** (value is sent separately — not in this repo). Sheet sync `POST`s to `/api/sync-firms` with `Authorization: Bearer <SYNC_SECRET>`.
 
 ## Verify
 
@@ -249,7 +266,8 @@ npm run dev
 - [ ] `/overview` — no Price pin; **View firm** on Apex opens `https://propfirmgenie.com/firm/apex`; page scroll like Challenges.
 - [ ] Overview payout: Apex = `5 winning days` (not `$100 · $200 · $250…`). Tradeify / FundedNext are short cadence lists, not a paragraph dump.
 - [ ] `/firms` — directory lists firms; page scroll, not a boxed inner scroller.
-- [ ] `/compare` still highlights two picked plans.
+- [ ] `/compare` still highlights two picked plans. On PFG this page has no header nav; Overview spotlight (and optional footer) is the entry.
+- [ ] PFG URLs (do not use this pack’s redirects): `/deals-coupons` = Challenges, `/compare-firms` = Overview, `/` = Firms directory.
 - [ ] `/demo-4` → `/firms`, `/compare-page-2` → `/overview`, `/compare-firms` → `/compare`.
 - [ ] After a dummy TSV edit: `validate:firms` → `sync:firms` → Challenges price/payout updates.
 - [ ] New firm logo: paste a Supabase `genie-assets/firms/…` URL in **Logo**, sync, mark appears. New platform: upload `platforms/{Name}.webp` and add the name to **Platforms**.
