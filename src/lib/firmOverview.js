@@ -125,13 +125,17 @@ export function summarizeFirm(firm, { applyDiscount = true } = {}) {
     const byType = new Map();
     for (const p of plans) {
       const type = p.planType || 'Plan';
-      if (!byType.has(type)) byType.set(type, []);
-      byType.get(type).push(p.accountSize);
+      if (!byType.has(type)) byType.set(type, { sizes: [], notes: [] });
+      const group = byType.get(type);
+      group.sizes.push(p.accountSize);
+      const note = String(p.info || '').trim();
+      if (note) group.notes.push(note);
     }
-    for (const [type, sizes] of byType) {
+    for (const [type, group] of byType) {
       planGroups.push({
         type,
-        sizes: uniq(sizes).sort((a, b) => sizeRank(a) - sizeRank(b)),
+        sizes: uniq(group.sizes).sort((a, b) => sizeRank(a) - sizeRank(b)),
+        notes: uniq(group.notes),
       });
     }
   }

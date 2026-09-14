@@ -3,7 +3,7 @@ import SiteNav from '@/components/green/SiteNav';
 export default function GreenPageShell({ children, className = '' }) {
   return (
     <div
-      className={`relative min-h-screen overflow-hidden bg-[#0a0f0d] font-[family-name:var(--font-dm)] text-white scheme-dark ${className}`.trim()}
+      className={`relative min-h-screen overflow-x-clip bg-[#0a0f0d] font-[family-name:var(--font-dm)] text-white scheme-dark ${className}`.trim()}
     >
       <div
         aria-hidden

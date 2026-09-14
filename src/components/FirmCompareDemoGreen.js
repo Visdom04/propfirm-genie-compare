@@ -1,8 +1,9 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { useMemo, useState, useCallback, useEffect, useRef, useId } from 'react';
-import { Bookmark, Star } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect, useLayoutEffect, useRef, useId, memo } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { Bookmark, Check, Copy, Star } from 'lucide-react';
 import { firms as staticFirms, ACCOUNT_SIZE_OPTIONS, PRICE_OPTIONS } from '@/data/firms';
 import CompareFilterSidebar, {
   createEmptyFacet,
@@ -12,13 +13,17 @@ import CompareFilterSidebar, {
   normalizeDrawdown,
 } from '@/components/CompareFilterSidebar';
 import { PfgPrimary } from '@/components/green/PfgControls';
+import TableScrollSlider from '@/components/green/TableScrollSlider';
+import { discountBadge } from '@/lib/compareHighlights';
 import { firmLogo } from '@/lib/firmLogos';
+import { compareFirmNames, defaultSortDir } from '@/lib/firmSort';
 import { listPriceOf, salePriceOf } from '@/lib/planPrice';
 import './FirmCompareDemoGreen.edges.css';
 
 const MAX_FAVORITES = 5;
-const PAGE_SIZE = 10;
-const COLS_STORAGE_KEY = 'cmp-green-visible-cols-v4';
+const COLS_STORAGE_KEY = 'cmp-green-visible-cols-v5';
+const COPY_BTN =
+  'btn-bare appearance-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3FB185]/70';
 
 /** Instant / Direct / STF grouped; 1 Step is the other eval path */
 const STEP_FILTER_OPTIONS = ['Instant / Direct / STF', '1 Step'];
@@ -36,6 +41,7 @@ function planMatchesStepFilter(planSteps, selected) {
 const DEFAULT_FIRM_ORDER = [
   'Lucid Trading',
   'Tradeify',
+  'Bulenox',
   'Take Profit Trader',
   'My Funded Futures',
   'Apex Trader Funding',
@@ -43,7 +49,6 @@ const DEFAULT_FIRM_ORDER = [
   'Phidias Propfirm',
   'E8 Futures',
   'Nexgen ProTrader Funding',
-  'Bulenox',
   'Purdia',
   'YRM Prop',
   'DayTraders',
@@ -150,41 +155,43 @@ const INFO_COPY = {
 };
 
 const MID_COLS = [
-  { key: 'planType', label: 'Plan', tip: 'planType', sort: true, min: 112 },
-  { key: 'steps', label: 'Steps', tip: 'steps', sort: true, min: 96 },
-  { key: 'accountSize', label: 'Account', label2: 'size', tip: 'accountSize', sort: true, min: 92 },
-  { key: 'maxLossType', label: 'Drawdown', label2: 'type', tip: 'maxLossType', sort: true, min: 96 },
-  { key: 'activationFee', label: 'Activation fee', tip: 'activationFee', sort: false, min: 144 },
-  { key: 'profitTarget', label: 'Profit', label2: 'target', tip: 'profitTarget', sort: true, min: 96 },
-  { key: 'maxLoss', label: 'Max', label2: 'drawdown', tip: 'maxLoss', sort: true, min: 96 },
-  { key: 'maxLots', label: 'Max', label2: 'contract', sub: 'Minis / Micros', tip: 'maxLots', sort: false, min: 108 },
+  { key: 'planType', label: 'Plan', tip: 'planType', sort: true, min: 120 },
+  { key: 'steps', label: 'Steps', tip: 'steps', sort: true, min: 88 },
+  { key: 'accountSize', label: 'Account size', tip: 'accountSize', sort: true, min: 120 },
+  { key: 'maxLossType', label: 'Drawdown type', tip: 'maxLossType', sort: true, min: 132 },
+  { key: 'activationFee', label: 'Activation fee', tip: 'activationFee', sort: true, min: 144 },
+  { key: 'profitTarget', label: 'Profit target', tip: 'profitTarget', sort: true, min: 120 },
+  { key: 'maxLoss', label: 'Max drawdown', tip: 'maxLoss', sort: true, min: 128 },
+  { key: 'maxLots', label: 'Max contract', sub: 'Minis / Micros', tip: 'maxLots', sort: true, min: 120 },
   {
     key: 'consistency',
     label: 'Consistency rule',
     sub: 'Eval / Funded',
     tip: 'consistency',
-    sort: false,
-    min: 176,
+    sort: true,
+    min: 160,
   },
-  { key: 'payoutFreq', label: 'Payout freq.', tip: 'payoutFreq', sort: true, min: 208 },
-  { key: 'profitSplit', label: 'Profit split', tip: 'profitSplit', sort: true, min: 144 },
+  { key: 'payoutFreq', label: 'Payout freq.', tip: 'payoutFreq', sort: true, min: 132 },
+  { key: 'profitSplit', label: 'Profit split', tip: 'profitSplit', sort: true, min: 120 },
+  { key: 'price', label: 'Price', tip: 'price', sort: true, min: 108 },
 ];
 
 const ALL_COL_KEYS = MID_COLS.map(c => c.key);
 
-const ROW =
-  'cmp-edge-row relative grid items-stretch grid-cols-[280px_minmax(0,1fr)_216px] max-md:grid-cols-[244px_minmax(0,1fr)_184px]';
+const ROW = 'cmp-edge-row items-stretch';
 const PIN_FIRM =
   'cmp-edge-pin-firm flex min-w-0 items-center self-stretch bg-transparent';
-const PIN_PRICE =
-  'cmp-edge-pin-price flex min-w-0 items-center self-stretch bg-transparent';
+const PIN_PROMO =
+  'cmp-edge-pin-promo flex min-w-0 items-center justify-center self-stretch bg-transparent';
+const PIN_VISIT =
+  'cmp-edge-pin-visit flex min-w-0 items-center justify-center self-stretch bg-transparent';
 const PIN_HEAD = 'cmp-edge-head py-3';
 const MID =
-  'cmp-mid relative min-w-0 overflow-x-auto overflow-y-hidden scrollbar-none bg-transparent';
+  'cmp-mid relative min-w-0 overflow-visible bg-transparent';
 const MID_CELL =
-  'relative box-border flex min-h-[64px] shrink-0 items-center justify-center border-r border-white/[0.06] last:border-r-0 px-3 py-2.5';
+  'cmp-mid-cell relative box-border flex min-h-[64px] shrink-0 items-center justify-center border-r border-white/[0.06] last:border-r-0 px-3 py-2.5';
 const TH =
-  'flex min-h-[44px] flex-col items-center justify-center gap-0.5 whitespace-nowrap text-center text-[0.62rem] font-semibold uppercase tracking-[0.06em] text-slate-500';
+  'flex min-h-[40px] flex-col items-center justify-center gap-0.5 whitespace-nowrap text-center text-[0.62rem] font-semibold uppercase tracking-[0.04em] text-slate-500';
 const CHIP_ON = 'border-[#3FB185]/50 bg-[#3FB185]/15 text-[#3FB185]';
 const CHIP_OFF = 'border-white/10 bg-black/20 text-slate-200 hover:border-emerald-500/35';
 
@@ -203,6 +210,7 @@ function loadVisibleCols() {
 }
 
 function sortValue(key, plan, firm) {
+  if (key === 'firm') return firm?.name || '';
   if (key === 'planType' || key === 'steps') {
     return String(plan[key] || '').toLowerCase();
   }
@@ -220,28 +228,26 @@ function sortValue(key, plan, firm) {
     const m = raw.replace(/,/g, '').match(/-?[\d.]+/);
     return m ? Number(m[0]) : 0;
   }
+  if (key === 'maxLots') {
+    const m = String(plan.maxLots || '').match(/[\d.]+/);
+    return m ? Number(m[0]) : 0;
+  }
+  if (key === 'consistency') {
+    return `${plan.consistencyEval || ''} ${plan.consistencyFunded || ''}`.toLowerCase();
+  }
   if (key === 'ptDd') {
     const parts = String(plan.ptDd || '').split(':');
     if (parts.length === 2) return Number(parts[1]) || 0;
     return 0;
   }
-  return plan[key] ?? firm[key] ?? '';
-}
-
-function buildPageItems(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const items = [];
-  const push = n => {
-    if (items[items.length - 1] !== n) items.push(n);
-  };
-  push(1);
-  if (current > 3) push('…');
-  for (let n = Math.max(2, current - 1); n <= Math.min(total - 1, current + 1); n += 1) {
-    push(n);
+  if (key === 'promo') {
+    const label = promoOffLabel(firm, plan);
+    const range = String(label).match(/(\d+)\s*[–-]\s*(\d+)/);
+    if (range) return Number(range[2]) || Number(range[1]) || 0;
+    const m = String(label).match(/(\d+)/);
+    return m ? Number(m[1]) : 0;
   }
-  if (current < total - 2) push('…');
-  push(total);
-  return items;
+  return plan[key] ?? firm[key] ?? '';
 }
 
 function formatMultiLabel(selected, fallback) {
@@ -293,6 +299,22 @@ function formatMoney(n) {
   return `$${v.toFixed(2)}`;
 }
 
+function promoOffLabel(firm, plan) {
+  const firmDisc = String(firm?.discount || '');
+  const range = firmDisc.match(/(\d+)\s*[–-]\s*(\d+)\s*%/);
+  if (range) return `${range[1]}–${range[2]}% OFF`;
+  const badge = discountBadge(firm, plan);
+  if (badge) return `${String(badge).replace(/^-/, '')} OFF`;
+  const m = firmDisc.match(/(\d+)\s*%/);
+  if (m) return `${m[1]}% OFF`;
+  return 'Deal';
+}
+
+function visitUrl(firm) {
+  if (firm?.affiliateLink) return firm.affiliateLink;
+  return firmWebsiteUrl(firm?.website);
+}
+
 function SortArrows({ active, direction }) {
   const upStrong = active && direction === 'asc';
   const downStrong = active && direction === 'desc';
@@ -329,21 +351,60 @@ function VerifiedBadge() {
   );
 }
 
-function RatingChip({ rating, reviews, idPrefix }) {
+function RatingChip({ rating, reviews, idPrefix, dense = false }) {
   if (reviews < 10) {
-    return <span className="text-[0.68rem] font-semibold text-[#3FB185]">Less than 10 reviews</span>;
+    return (
+      <span className={`font-semibold text-[#3FB185] ${dense ? 'text-[0.58rem]' : 'text-[0.68rem]'}`}>
+        {dense ? 'New' : 'Less than 10 reviews'}
+      </span>
+    );
   }
   return (
     <span
-      className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#3FB185]/35 bg-[#3FB185]/10 px-2 py-[3px]"
+      className={`inline-flex max-w-full items-center gap-1 rounded-full border border-[#3FB185]/35 bg-[#3FB185]/10 ${
+        dense ? 'px-1.5 py-px' : 'px-2 py-[3px]'
+      }`}
       aria-label={`Rated ${rating} from ${Number(reviews).toLocaleString('en-US')} reviews`}
     >
-      <span className="shrink-0 text-[0.72rem] font-bold tabular-nums text-white">{Number(rating).toFixed(1)}</span>
-      <RatingStars rating={rating} idPrefix={idPrefix} />
-      <span className="shrink-0 text-[0.68rem] font-bold tabular-nums text-[#3FB185]">
+      <span className={`shrink-0 font-bold tabular-nums text-white ${dense ? 'text-[0.62rem]' : 'text-[0.72rem]'}`}>
+        {Number(rating).toFixed(1)}
+      </span>
+      {dense ? null : <RatingStars rating={rating} idPrefix={idPrefix} />}
+      <span className={`shrink-0 font-bold tabular-nums text-[#3FB185] ${dense ? 'text-[0.58rem]' : 'text-[0.68rem]'}`}>
         [{Number(reviews).toLocaleString('en-US')}]
       </span>
     </span>
+  );
+}
+
+function FirmIdentity({ firm, planId, favorites, toggleFavorite, dense = false, className = '' }) {
+  const liked = favorites.has(firm.name);
+  return (
+    <div className={`flex w-max max-w-full min-w-0 items-start gap-1 ${className}`.trim()}>
+      <div className="flex min-w-0 flex-col items-start justify-center gap-0.5 pt-0.5">
+        <span className="cmp-firm-name block w-full truncate font-bold leading-tight tracking-tight text-slate-50">
+          {firm.name}
+        </span>
+        <RatingChip rating={firm.rating} reviews={firm.reviews} idPrefix={planId} dense={dense} />
+      </div>
+      <button
+        type="button"
+        className={`btn-bare grid size-7 shrink-0 place-items-center rounded-md ${
+          liked ? 'text-[#3FB185]' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+        }`}
+        onClick={() => toggleFavorite(firm.name)}
+        aria-label={liked ? `Remove ${firm.name} from bookmarks` : `Bookmark ${firm.name}`}
+        aria-pressed={liked}
+        disabled={!liked && favorites.size >= MAX_FAVORITES ? true : undefined}
+      >
+        <Bookmark
+          size={15}
+          strokeWidth={1.85}
+          fill={liked ? 'currentColor' : 'transparent'}
+          aria-hidden
+        />
+      </button>
+    </div>
   );
 }
 
@@ -359,7 +420,7 @@ function splitDrawdown(value) {
 function RatingStars({ rating, idPrefix = 'star' }) {
   const rounded = Math.round(Math.min(5, Math.max(0, Number(rating) || 0)) * 2) / 2;
   return (
-    <span className="inline-flex items-center gap-0.5 leading-none" aria-hidden>
+    <span className="cmp-rating-stars inline-flex items-center gap-0.5 leading-none" aria-hidden>
       {[1, 2, 3, 4, 5].map(n => {
         const state = rounded >= n ? 'full' : rounded >= n - 0.5 ? 'half' : 'empty';
         const clipId = `${idPrefix}-half-${n}`;
@@ -391,14 +452,14 @@ function ProfitSplitBar({ pct }) {
   const numericOnly = /^\d+(\.\d+)?$/.test(raw);
   const fillNum = numericOnly ? Number(raw) : Number(String(raw).match(/[\d.]+/)?.[0] || 0);
   if (!numericOnly && raw) {
-    return <span className="font-bold text-white">{raw.includes('%') ? raw : `${raw}%`}</span>;
+    return <span className="cmp-profit-split-value font-bold text-white">{raw.includes('%') ? raw : `${raw}%`}</span>;
   }
   const fill = Math.min(100, Math.max(0, fillNum || 0));
   const segs = 10;
   const lit = Math.round((fill / 100) * segs);
   return (
-    <div className="flex min-w-[110px] items-center gap-2.5">
-      <span className="text-[0.95rem] font-extrabold text-white">{fill}%</span>
+    <div className="cmp-profit-split flex min-w-[110px] items-center gap-2.5">
+      <span className="cmp-profit-split-value text-[0.78rem] font-extrabold text-white">{fill}%</span>
       <div className="flex min-w-14 flex-1 items-center gap-0.5" role="presentation" aria-hidden>
         {Array.from({ length: segs }, (_, i) => (
           <span
@@ -487,14 +548,17 @@ function InfoTip({ tipKey, text: textProp, label = 'More info' }) {
   );
 }
 
-function renderMidCell(col, p) {
+function renderMidCell(col, p, applyDiscount) {
   const style = { flex: `0 0 ${col.min}px`, minWidth: col.min };
   const wrap = `${MID_CELL} text-center text-[0.82rem] font-semibold leading-snug text-slate-50`;
   switch (col.key) {
     case 'planType':
       return (
         <div key={col.key} className={`${wrap} px-2 text-[0.78rem] leading-snug`} style={style}>
-          <span className="line-clamp-2">{p.planType || '—'}</span>
+          <span className="inline-flex max-w-full items-center justify-center gap-1">
+            <span className="line-clamp-2">{p.planType || '—'}</span>
+            {p.info ? <InfoTip text={p.info} label="Plan info" /> : null}
+          </span>
         </div>
       );
     case 'steps':
@@ -555,7 +619,7 @@ function renderMidCell(col, p) {
     }
     case 'profitSplit':
       return (
-        <div key={col.key} className={MID_CELL} style={style}>
+        <div key={col.key} className={`${MID_CELL} cmp-profit-split-cell`} style={style}>
           <ProfitSplitBar pct={p.profitSplitLabel || p.profitSplit} />
         </div>
       );
@@ -577,10 +641,133 @@ function renderMidCell(col, p) {
           {p.payoutFreq}
         </div>
       );
+    case 'price': {
+      const sale = salePriceOf(p);
+      const list = listPriceOf(p);
+      const display = applyDiscount ? sale : list;
+      const showWas = applyDiscount && list > sale;
+      return (
+        <div key={col.key} className={`${wrap} cmp-price-cell flex-col gap-0.5`} style={style}>
+          <span className="inline-flex items-center gap-1">
+            <span className="cmp-price-value text-[0.78rem] font-extrabold tabular-nums tracking-tight">{formatMoney(display)}</span>
+            {p.priceNote ? <InfoTip text={p.priceNote} label="Other price options for this plan" /> : null}
+          </span>
+          {showWas ? (
+            <span className="text-[0.7rem] font-semibold text-slate-500 line-through tabular-nums">{formatMoney(list)}</span>
+          ) : null}
+          <span className="text-[0.62rem] font-medium lowercase tracking-normal text-slate-500">
+            {String(p.priceType || 'One Time').toLowerCase()}
+          </span>
+        </div>
+      );
+    }
     default:
       return null;
   }
 }
+
+const ChallengeRow = memo(function ChallengeRow({
+  index,
+  firm: f,
+  plan: p,
+  visibleMidCols,
+  applyDiscount,
+  favorites,
+  toggleFavorite,
+  copiedKey,
+  copyCode,
+}) {
+  const href = visitUrl(f);
+  const even = index % 2 === 1;
+  const logoSrc = firmLogo(f.name, f.logo);
+  const code = p.promoCode || f.promoCode || 'KAGE';
+  const copyKey = p.id || `${f.name}:${code}`;
+  const copied = copiedKey === copyKey;
+  const off = promoOffLabel(f, p);
+  return (
+    <div className={`${ROW} group ${even ? 'cmp-edge-row--even' : ''}`} role="row">
+      <div className={`${PIN_FIRM}`} role="cell">
+        <div className="flex w-full min-w-0 items-start gap-2">
+          <div className="cmp-firm-logo relative mt-0.5 shrink-0">
+            <div className="cmp-firm-logo__mark overflow-hidden rounded-full bg-black ring-1 ring-white/15">
+              {logoSrc ? (
+                <img
+                  src={logoSrc}
+                  alt=""
+                  width={80}
+                  height={80}
+                  className="size-full object-cover object-center"
+                />
+              ) : (
+                <span className="grid size-full place-items-center text-[0.58rem] font-bold text-white/50">
+                  {f.name.slice(0, 2)}
+                </span>
+              )}
+            </div>
+            {f.reviews >= 10 && f.rating >= 4 ? <VerifiedBadge /> : null}
+          </div>
+          <FirmIdentity
+            className="cmp-firm-meta"
+            firm={f}
+            planId={`r-${p.id}`}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+          />
+        </div>
+      </div>
+
+      <div className={`${MID}`} role="presentation">
+        <div className="flex min-h-full w-max items-stretch">
+          <FirmIdentity
+            className="cmp-firm-meta-mid"
+            firm={f}
+            planId={`r-mid-${p.id}`}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+            dense
+          />
+          {visibleMidCols.map(col => renderMidCell(col, p, applyDiscount))}
+        </div>
+      </div>
+
+      <div className="cmp-edge-cta">
+        <div className={`${PIN_PROMO} px-2`} role="cell">
+          <div className="w-full overflow-hidden rounded-lg border border-dashed border-[#3FB185]/35">
+            <div className="bg-[#3FB185] px-1.5 py-0.5 text-center text-[0.62rem] font-bold leading-tight text-[#0a0f0d]">
+              {off}
+            </div>
+            <button
+              type="button"
+              className={`${COPY_BTN} flex w-full items-center justify-center gap-1 bg-[#08120e]! px-1.5 py-1.5 text-[0.68rem] font-bold text-white! hover:bg-[#0e1c16]!`}
+              onClick={() => copyCode(copyKey, code)}
+              aria-label={`Copy promo code ${code}`}
+            >
+              {copied ? <Check size={11} /> : <Copy size={11} />}
+              {copied ? 'Copied' : code}
+            </button>
+          </div>
+        </div>
+        <div className={`${PIN_VISIT} px-2`} role="cell">
+          {href ? (
+            <PfgPrimary
+              href={href}
+              compact
+              className="cmp-view-btn h-8 rounded-full! px-3.5"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+            >
+              View Firm
+            </PfgPrimary>
+          ) : (
+            <span className="inline-flex h-8 items-center rounded-full bg-white/5 px-3 text-[0.72rem] font-bold text-slate-500">
+              —
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 function ToolbarIcon({ name }) {
   const s = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': true };
@@ -640,7 +827,7 @@ function FilterDropdown({ id, label, valueLabel, open, onToggle, options, select
     <div className="relative shrink-0">
       <button
         type="button"
-        className={`btn-bare inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[0.78rem] font-semibold ${
+        className={`btn-bare inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[0.78rem] font-semibold max-md:h-8 max-md:gap-1 max-md:rounded-lg max-md:px-2.5 max-md:text-[0.7rem] ${
           selected.length ? `border-[#3FB185]/50 bg-[#3FB185]/12 text-[#3FB185]` : 'border-white/10 bg-white/5 text-white/80'
         } ${open ? 'border-[#3FB185]/60' : ''}`}
         onClick={() => onToggle(open ? null : id)}
@@ -683,6 +870,7 @@ function FilterDropdown({ id, label, valueLabel, open, onToggle, options, select
 
 const SORT_OPTIONS = [
   { key: 'default', label: 'Popularity' },
+  { key: 'firm', label: 'A–Z' },
   { key: 'price', label: 'Price' },
   { key: 'accountSize', label: 'Account size' },
   { key: 'profitSplit', label: 'Profit split' },
@@ -690,6 +878,7 @@ const SORT_OPTIONS = [
 ];
 
 function sortLabel(sort) {
+  if (sort.key === 'firm' && sort.dir === 'desc') return 'Z–A';
   return SORT_OPTIONS.find(o => o.key === sort.key)?.label || MID_COLS.find(c => c.key === sort.key)?.label || 'Popularity';
 }
 
@@ -718,26 +907,20 @@ function ToggleSwitch({ label, checked, onChange }) {
           ) : null}
         </span>
       </button>
-      <span className="whitespace-nowrap text-[0.78rem] font-semibold text-white/75">{label}</span>
+      <span className="whitespace-nowrap text-[0.78rem] font-semibold text-white/75 max-md:text-[0.68rem]">{label}</span>
     </label>
   );
 }
 
 function HeadLabel({ label, label2 }) {
-  if (!label2) return <span>{label}</span>;
-  return (
-    <span className="flex flex-col items-center leading-[1.15] text-center">
-      <span>{label}</span>
-      <span>{label2}</span>
-    </span>
-  );
+  return <span className="cmp-head-text whitespace-nowrap">{label2 ? `${label} ${label2}` : label}</span>;
 }
 
 function SortHead({ label, label2, sortKey, sort, onSort, className = '', sub, tip, style }) {
   return (
     <div
       role="columnheader"
-      className={`${TH} ${label2 || sub ? 'whitespace-normal' : ''} ${className}`.trim()}
+      className={`${TH} ${className}`.trim()}
       style={style}
       aria-sort={sort.key === sortKey ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none'}
     >
@@ -759,7 +942,7 @@ function SortHead({ label, label2, sortKey, sort, onSort, className = '', sub, t
 
 function StaticHead({ label, label2, sub, tip, className = '', style }) {
   return (
-    <div role="columnheader" className={`${TH} ${label2 || sub ? 'whitespace-normal' : ''} ${className}`.trim()} style={style}>
+    <div role="columnheader" className={`${TH} ${className}`.trim()} style={style}>
       <div className="flex items-center gap-0.5">
         <span className="uppercase">
           <HeadLabel label={label} label2={label2} />
@@ -767,113 +950,6 @@ function StaticHead({ label, label2, sub, tip, className = '', style }) {
         {tip ? <InfoTip tipKey={tip} /> : null}
       </div>
       {sub ? <span className="text-[0.62rem] font-medium normal-case tracking-normal text-slate-500">{sub}</span> : null}
-    </div>
-  );
-}
-
-function TableScrollSlider({ getMidPanes, masterRef }) {
-  const trackRef = useRef(null);
-  const dragging = useRef(false);
-  const [metrics, setMetrics] = useState({ thumbPct: 40, leftPct: 0, needed: false });
-
-  const measure = useCallback(() => {
-    const el = masterRef.current;
-    if (!el) return;
-    const { scrollWidth, clientWidth, scrollLeft } = el;
-    const needed = scrollWidth > clientWidth + 2;
-    const thumbPct = needed ? Math.max(12, (clientWidth / scrollWidth) * 100) : 100;
-    const maxScroll = Math.max(1, scrollWidth - clientWidth);
-    const leftPct = needed ? (scrollLeft / maxScroll) * (100 - thumbPct) : 0;
-    setMetrics({ thumbPct, leftPct, needed });
-  }, [masterRef]);
-
-  useEffect(() => {
-    const el = masterRef.current;
-    if (!el) return undefined;
-    measure();
-    el.addEventListener('scroll', measure, { passive: true });
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    if (el.firstElementChild) ro.observe(el.firstElementChild);
-    window.addEventListener('resize', measure);
-    return () => {
-      el.removeEventListener('scroll', measure);
-      ro.disconnect();
-      window.removeEventListener('resize', measure);
-    };
-  }, [masterRef, measure]);
-
-  const setAllScroll = useCallback(
-    left => {
-      getMidPanes().forEach(pane => {
-        if (pane) pane.scrollLeft = left;
-      });
-      measure();
-    },
-    [getMidPanes, measure]
-  );
-
-  const scrollFromClientX = useCallback(
-    clientX => {
-      const el = masterRef.current;
-      const track = trackRef.current;
-      if (!el || !track) return;
-      const rect = track.getBoundingClientRect();
-      const thumbW = (metrics.thumbPct / 100) * rect.width;
-      const usable = Math.max(1, rect.width - thumbW);
-      const x = Math.min(Math.max(clientX - rect.left - thumbW / 2, 0), usable);
-      const ratio = x / usable;
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      setAllScroll(ratio * maxScroll);
-    },
-    [masterRef, metrics.thumbPct, setAllScroll]
-  );
-
-  useEffect(() => {
-    const onMove = e => {
-      if (!dragging.current) return;
-      scrollFromClientX(e.clientX);
-    };
-    const onUp = () => {
-      dragging.current = false;
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, [scrollFromClientX]);
-
-  if (!metrics.needed) {
-    return (
-      <div className="relative h-2 min-w-0 flex-1" aria-hidden>
-        <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-white/10" />
-        <div className="absolute inset-x-[8%] top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-linear-to-r from-transparent via-[#3FB185] to-transparent shadow-[0_0_12px_rgba(63,177,133,0.45)]" />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="relative h-2 min-w-[120px] flex-1 cursor-pointer"
-      ref={trackRef}
-      role="scrollbar"
-      aria-orientation="horizontal"
-      aria-controls="cmp-mid-scroller"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(metrics.leftPct)}
-      onPointerDown={e => {
-        dragging.current = true;
-        scrollFromClientX(e.clientX);
-      }}
-    >
-      <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-white/10" aria-hidden />
-      <div
-        className="absolute top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-gradient-to-r from-[#1B4B38] via-[#3FB185] to-[#3FB185]/70 shadow-[0_0_12px_rgba(63,177,133,0.35)]"
-        style={{ width: `${metrics.thumbPct}%`, left: `${metrics.leftPct}%` }}
-      />
     </div>
   );
 }
@@ -894,12 +970,25 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
   const [colsHydrated, setColsHydrated] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [sort, setSort] = useState({ key: 'default', dir: 'asc' });
-  const [page, setPage] = useState(1);
+  const [copiedKey, setCopiedKey] = useState(null);
   const toolbarRef = useRef(null);
   const boardRef = useRef(null);
-  const masterMidRef = useRef(null);
-  const midScrollLeft = useRef(0);
-  const syncingScroll = useRef(false);
+  const workbenchRef = useRef(null);
+  const headRailRef = useRef(null);
+  const listRef = useRef(null);
+  const [listOffset, setListOffset] = useState(0);
+
+  useEffect(() => {
+    const board = boardRef.current;
+    const rail = headRailRef.current;
+    if (!board || !rail) return undefined;
+    const sync = () => {
+      rail.scrollLeft = board.scrollLeft;
+    };
+    sync();
+    board.addEventListener('scroll', sync, { passive: true });
+    return () => board.removeEventListener('scroll', sync);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 900px)');
@@ -939,36 +1028,8 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
   }, []);
 
   const getMidPanes = useCallback(() => {
-    const root = boardRef.current;
-    if (!root) return [];
-    return Array.from(root.querySelectorAll('.cmp-mid'));
+    return [boardRef.current, headRailRef.current].filter(Boolean);
   }, []);
-
-  const setMasterMidRef = useCallback(el => {
-    masterMidRef.current = el;
-  }, []);
-
-  const applyMidScroll = useCallback(
-    (left, source) => {
-      midScrollLeft.current = left;
-      getMidPanes().forEach(pane => {
-        if (pane !== source && pane.scrollLeft !== left) pane.scrollLeft = left;
-      });
-    },
-    [getMidPanes]
-  );
-
-  const onMidScroll = useCallback(
-    e => {
-      if (syncingScroll.current) return;
-      syncingScroll.current = true;
-      applyMidScroll(e.currentTarget.scrollLeft, e.currentTarget);
-      requestAnimationFrame(() => {
-        syncingScroll.current = false;
-      });
-    },
-    [applyMidScroll]
-  );
 
   const uniqueCountries = useMemo(
     () => [...new Set(firms.map(f => f.countryCode).filter(Boolean))].sort(),
@@ -1050,8 +1111,22 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
       else if (next.size < MAX_FAVORITES) next.add(name);
+      if (next.size === 0) queueMicrotask(() => setTopMode('all'));
       return next;
     });
+  }, []);
+
+  const copyCode = useCallback(async (key, code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      /* clipboard can be blocked */
+    }
+    setCopiedKey(key);
+    window.setTimeout(() => {
+      setCopiedKey(current => (current === key ? null : current));
+    }, 1600);
   }, []);
 
   const openSidebar = useCallback(() => {
@@ -1103,7 +1178,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
 
   const cycleSort = useCallback(key => {
     setSort(prev => {
-      if (prev.key !== key) return { key, dir: 'desc' };
+      if (prev.key !== key) return { key, dir: defaultSortDir(key) };
       return { key, dir: prev.dir === 'desc' ? 'asc' : 'desc' };
     });
   }, []);
@@ -1198,67 +1273,50 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
         return sortValue('accountSize', b.plan, b.firm) - sortValue('accountSize', a.plan, a.firm);
       }
 
+      if (sort.key === 'firm') {
+        const byName = compareFirmNames(a.firm.name, b.firm.name, sort.dir);
+        if (byName !== 0) return byName;
+        return sortValue('accountSize', a.plan, a.firm) - sortValue('accountSize', b.plan, b.firm);
+      }
+
       const av = sortValue(sort.key, a.plan, a.firm);
       const bv = sortValue(sort.key, b.plan, b.firm);
       let primary = 0;
       if (typeof av === 'number' && typeof bv === 'number') primary = (av - bv) * mul;
-      else primary = String(av ?? '').localeCompare(String(bv ?? '')) * mul;
+      else primary = compareFirmNames(av, bv, sort.dir);
       if (primary !== 0) return primary;
-      return firmOrderIndex(a.firm.name) - firmOrderIndex(b.firm.name);
+      const byName = compareFirmNames(a.firm.name, b.firm.name);
+      if (byName !== 0) return byName;
+      return sortValue('accountSize', a.plan, a.firm) - sortValue('accountSize', b.plan, b.firm);
     });
 
     return rows;
   }, [topMode, favorites, facet, sort, search, applyDiscount, firms, filterBounds]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = useMemo(() => buildPageItems(page, totalPages), [page, totalPages]);
+  const rowVirtualizer = useWindowVirtualizer({
+    count: filtered.length,
+    estimateSize: () => 88,
+    overscan: 12,
+    scrollMargin: listOffset,
+    getItemKey: index => filtered[index]?.plan?.id ?? index,
+  });
 
-  useEffect(() => {
-    setPage(1);
-  }, [topMode, facet, sort, search]);
-
-  useEffect(() => {
-    setPage(p => Math.min(p, totalPages));
-  }, [totalPages]);
-
-  const pageRows = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
-
-  useEffect(() => {
-    const left = midScrollLeft.current;
-    const id = requestAnimationFrame(() => applyMidScroll(left, null));
-    return () => cancelAnimationFrame(id);
-  }, [pageRows, visibleMidCols, applyMidScroll]);
-
-  useEffect(() => {
-    const root = boardRef.current;
-    if (!root) return undefined;
-
-    const onWheel = e => {
-      const mid = e.target instanceof Element ? e.target.closest('.cmp-mid') : null;
-      if (!mid || !root.contains(mid)) return;
-      const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
-      const shiftVertical = e.shiftKey && Math.abs(e.deltaY) > 0;
-      if (!horizontal && !shiftVertical) return;
-      const delta = horizontal ? e.deltaX : e.deltaY;
-      if (!delta) return;
-      e.preventDefault();
-      const max = Math.max(0, mid.scrollWidth - mid.clientWidth);
-      const next = Math.min(Math.max(mid.scrollLeft + delta, 0), max);
-      syncingScroll.current = true;
-      applyMidScroll(next, null);
-      requestAnimationFrame(() => {
-        syncingScroll.current = false;
-      });
+  useLayoutEffect(() => {
+    const node = listRef.current;
+    if (!node) return undefined;
+    const update = () => {
+      const top = node.getBoundingClientRect().top + window.scrollY;
+      setListOffset(Math.round(top));
     };
-
-    root.addEventListener('wheel', onWheel, { passive: false });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    window.addEventListener('resize', update);
     return () => {
-      root.removeEventListener('wheel', onWheel);
+      ro.disconnect();
+      window.removeEventListener('resize', update);
     };
-  }, [applyMidScroll]);
+  }, [filtered.length, visibleMidCols]);
 
   const favCount = favorites.size;
   const activeFilterCount = countActiveFilters(facet, filterBounds);
@@ -1281,13 +1339,14 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
         />
 
         <div className="min-w-0 flex-1">
-          <div className="w-full">
+          <div className="cmp-workbench" ref={workbenchRef}>
+            <div className="cmp-sticky-top">
             <div
-              className="relative z-[3] flex flex-col gap-3 rounded-t-2xl border border-white/10 border-b-[#3FB185]/25 bg-[#08120e]/90 px-4 py-3 sm:px-[18px] sm:py-3.5"
+              className="cmp-chrome relative z-[3] flex flex-col gap-3 rounded-t-2xl border border-white/10 border-b-[#3FB185]/25 px-4 py-3 sm:px-[18px] sm:py-3.5 max-md:gap-2 max-md:px-2 max-md:py-2"
               ref={toolbarRef}
             >
               <div
-                className={`scrollbar-none relative flex min-w-0 flex-nowrap items-center gap-2 ${
+                className={`scrollbar-none relative flex min-w-0 flex-nowrap items-center gap-2 max-md:gap-1.5 ${
                   openDropdown ? 'overflow-visible' : 'overflow-x-auto'
                 }`}
                 role="toolbar"
@@ -1295,7 +1354,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
               >
                 <button
                   type="button"
-                  className={`btn-bare relative grid size-10 shrink-0 place-items-center rounded-xl border ${
+                  className={`btn-bare relative inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[0.78rem] font-semibold max-md:h-8 max-md:gap-1 max-md:rounded-lg max-md:px-2.5 max-md:text-[0.7rem] ${
                     sidebarOpen
                       ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]'
                       : 'border-white/10 bg-white/5 text-white/80'
@@ -1310,8 +1369,9 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                   aria-label={sidebarOpen ? 'Close filters' : 'Open filters'}
                 >
                   <ToolbarIcon name="filter" />
+                  Filter
                   {activeFilterCount > 0 ? (
-                    <span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-[#3FB185] px-1 text-[9px] font-bold text-[#0a0f0d]">
+                    <span className="grid min-w-4 place-items-center rounded-full bg-[#3FB185] px-1.5 text-[9px] font-bold text-[#0a0f0d]">
                       {activeFilterCount}
                     </span>
                   ) : null}
@@ -1352,7 +1412,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
 
                 <button
                   type="button"
-                  className={`btn-bare inline-flex h-10 shrink-0 items-center rounded-full px-5 text-[0.82rem] font-bold ${
+                  className={`btn-bare inline-flex h-10 shrink-0 items-center rounded-full px-5 text-[0.82rem] font-bold max-md:h-8 max-md:px-3 max-md:text-[0.7rem] ${
                     topMode === 'all'
                       ? 'bg-[#3FB185] text-[#0a0f0d]'
                       : 'border border-white/10 bg-white/5 text-white/80'
@@ -1364,19 +1424,19 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                 </button>
                 <button
                   type="button"
-                  className={`btn-bare inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[0.78rem] font-semibold ${
+                  className={`btn-bare inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[0.78rem] font-semibold max-md:h-8 max-md:gap-1 max-md:rounded-lg max-md:px-2.5 max-md:text-[0.7rem] ${
                     topMode === 'favorites'
                       ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]'
                       : 'border-white/10 bg-white/5 text-white/80'
                   }`}
-                  onClick={() => setTopMode('favorites')}
+                  onClick={() => setTopMode(m => (m === 'favorites' ? 'all' : 'favorites'))}
                   aria-pressed={topMode === 'favorites'}
                 >
                   <ToolbarIcon name="bookmark" />
                   {favCount}/{MAX_FAVORITES}
                 </button>
 
-                <label className="ml-auto flex h-10 w-[min(100%,280px)] min-w-[200px] shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 focus-within:border-[#3FB185]/45">
+                <label className="ml-auto flex h-10 w-[min(100%,280px)] min-w-[200px] shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 focus-within:border-[#3FB185]/45 max-md:h-8 max-md:min-w-[148px] max-md:px-2">
                   <svg className="shrink-0 text-white/40" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
                     <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -1404,24 +1464,29 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                 </label>
               </div>
 
-              <div className="flex min-w-0 items-center gap-3">
-                <p className="m-0 shrink-0 text-[0.92rem] font-semibold text-[#3FB185]">
-                  {filtered.length.toLocaleString('en-US')} prop firm challenges
+              <div className="flex min-w-0 items-center gap-3 max-md:gap-2">
+                <p className="m-0 shrink-0 text-[0.92rem] font-semibold text-[#3FB185] max-md:text-[0.72rem]">
+                  <span className="md:hidden">{filtered.length.toLocaleString('en-US')} challenges</span>
+                  <span className="max-md:hidden">
+                    {filtered.length.toLocaleString('en-US')} prop firm challenges
+                  </span>
                 </p>
-                <TableScrollSlider getMidPanes={getMidPanes} masterRef={masterMidRef} />
+                <TableScrollSlider getMidPanes={getMidPanes} masterRef={boardRef} />
                 <div className="relative shrink-0">
                   <button
                     type="button"
-                    className="btn-bare inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-white/70 hover:text-white"
+                    className="btn-bare inline-flex max-w-[7.25rem] items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.68rem] font-semibold text-white/70 hover:text-white sm:max-w-none sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-[0.78rem]"
                     onClick={() => {
                       setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
                       setCustomizeOpen(false);
                     }}
                     aria-expanded={openDropdown === 'sort'}
                     aria-haspopup="listbox"
+                    aria-label={`Sorted by ${sortLabel(sort)}`}
                   >
-                    <span>
-                      Sorted by: <span className="text-white">{sortLabel(sort)}</span>
+                    <span className="min-w-0 truncate">
+                      <span className="max-sm:hidden">Sorted by: </span>
+                      <span className="text-white">{sortLabel(sort)}</span>
                     </span>
                     <span className="inline-flex flex-col text-[7px] leading-[0.65]" aria-hidden>
                       <span>▲</span>
@@ -1444,7 +1509,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                             sort.key === opt.key ? 'bg-[#3FB185]/15 text-[#3FB185]' : 'text-white/75 hover:bg-white/5'
                           }`}
                           onClick={() => {
-                            setSort({ key: opt.key, dir: opt.key === 'default' ? 'asc' : 'desc' });
+                            setSort({ key: opt.key, dir: defaultSortDir(opt.key) });
                             setOpenDropdown(null);
                           }}
                         >
@@ -1457,7 +1522,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                 <div className="relative shrink-0">
                   <button
                     type="button"
-                    className={`btn-bare grid size-9 place-items-center rounded-xl border ${
+                    className={`btn-bare grid size-9 place-items-center rounded-xl border max-md:size-8 max-md:rounded-lg ${
                       customizeOpen
                         ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]'
                         : 'border-white/10 bg-white/5 text-white/70'
@@ -1488,7 +1553,7 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                               checked={visibleCols.has(col.key)}
                               onChange={() => toggleCol(col.key)}
                             />
-                            <span>{col.label2 ? `${col.label} ${col.label2}` : col.label}</span>
+                            <span>{col.label}</span>
                           </label>
                         ))}
                       </div>
@@ -1504,19 +1569,20 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                 </div>
               </div>
             </div>
-
-            <div
-              className="cmp-edge-board relative z-[1] mt-0 flex w-full min-w-0 flex-col overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-[#060c0a]"
-              ref={boardRef}
-              role="table"
-              aria-label="Compare prop firm challenges: size, drawdown, contracts, payouts, and price"
-            >
+            <div className="cmp-head-rail scrollbar-none" ref={headRailRef}>
               <div className={`${ROW} cmp-edge-row--head m-0`} role="row">
-                <div className={`${PIN_FIRM} ${PIN_HEAD}`} role="columnheader">
-                  <span className={`${TH} w-full items-start pl-4 text-left`}>Firm</span>
+                <div className={`${PIN_FIRM} ${PIN_HEAD} bg-[#060c0a]`} role="columnheader">
+                  <SortHead
+                    label="Firm"
+                    sortKey="firm"
+                    sort={sort}
+                    onSort={cycleSort}
+                    className="cmp-firm-head w-full items-start pl-4 text-left"
+                  />
                 </div>
-                <div className={`${MID} flex items-center`} id="cmp-mid-scroller" ref={setMasterMidRef} onScroll={onMidScroll} role="presentation">
+                <div className={`${MID} flex items-center bg-[#060c0a]`} id="cmp-mid-scroller" role="presentation">
                   <div className="flex min-h-[52px] w-max items-center">
+                    <div className="cmp-firm-meta-mid" aria-hidden />
                     {visibleMidCols.map(col =>
                       col.sort ? (
                         <SortHead
@@ -1545,18 +1611,25 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                     )}
                   </div>
                 </div>
-                <div className={`${PIN_PRICE} ${PIN_HEAD} justify-end`} role="columnheader">
-                  <SortHead
-                    label="Price"
-                    tip="price"
-                    sortKey="price"
-                    sort={sort}
-                    onSort={cycleSort}
-                    className="w-full items-end text-right"
-                  />
+                <div className="cmp-edge-cta">
+                <div className={`${PIN_PROMO} ${PIN_HEAD} bg-[#060c0a]`} role="columnheader">
+                  <SortHead label="Promo" sortKey="promo" sort={sort} onSort={cycleSort} className="w-full justify-center" />
+                </div>
+                <div className={`${PIN_VISIT} ${PIN_HEAD} bg-[#060c0a]`} role="columnheader">
+                  <span className={`${TH} w-full`}>View Firm</span>
+                </div>
                 </div>
               </div>
+            </div>
+            </div>
 
+            <div className="cmp-board-clip">
+            <div
+              className="cmp-edge-board scrollbar-none relative z-[1] mt-0 flex w-full min-w-0 flex-col rounded-b-2xl border border-t-0 border-white/10 bg-[#060c0a]"
+              ref={boardRef}
+              role="table"
+              aria-label="Compare prop firm challenges: size, drawdown, contracts, payouts, promo, and visit"
+            >
               {filtered.length === 0 ? (
                 <div className="block px-6 py-10 text-center text-sm text-slate-400" role="row">
                   <div role="cell">
@@ -1575,172 +1648,62 @@ export default function FirmCompareDemo({ firms = staticFirms }) {
                   </div>
                 </div>
               ) : (
-                pageRows.map(({ firm: f, plan: p }, i) => {
-                  const websiteHref = firmWebsiteUrl(f.website);
-                  const salePrice = salePriceOf(p);
-                  const listPrice = listPriceOf(p);
-                  const displayPrice = applyDiscount ? salePrice : listPrice;
-                  const showWas = applyDiscount && listPrice > salePrice;
-                  const even = i % 2 === 1;
-                  const logoSrc = firmLogo(f.name, f.logo);
-                  return (
-                    <div
-                      key={p.id}
-                      className={`${ROW} group ${even ? 'cmp-edge-row--even' : ''}`}
-                      role="row"
-                      style={{ animationDelay: `${Math.min(i, 12) * 0.04}s` }}
-                    >
-                      <div className={`${PIN_FIRM}`} role="cell">
-                        <div className="flex w-full min-w-0 items-start gap-3">
-                          <div className="relative mt-0.5 shrink-0" style={{ width: 40, height: 40 }}>
-                            <div className="size-10 overflow-hidden rounded-full bg-black ring-1 ring-white/15">
-                              {logoSrc ? (
-                                <img
-                                  src={logoSrc}
-                                  alt=""
-                                  width={80}
-                                  height={80}
-                                  className="size-full object-cover object-center"
-                                />
-                              ) : (
-                                <span className="grid size-full place-items-center text-[0.58rem] font-bold text-white/50">
-                                  {f.name.slice(0, 2)}
-                                </span>
-                              )}
-                            </div>
-                            {f.reviews >= 10 && f.rating >= 4 ? <VerifiedBadge /> : null}
-                          </div>
-                          <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-1 pt-0.5">
-                            <span className="block w-full truncate text-[0.92rem] font-bold leading-tight tracking-tight text-slate-50">
-                              {f.name}
-                            </span>
-                            <RatingChip rating={f.rating} reviews={f.reviews} idPrefix={`r-${p.id}`} />
-                          </div>
-                          <button
-                            type="button"
-                            className={`btn-bare grid size-7 shrink-0 place-items-center rounded-md ${
-                              favorites.has(f.name)
-                                ? 'text-[#3FB185]'
-                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                            }`}
-                            onClick={() => toggleFavorite(f.name)}
-                            aria-label={
-                              favorites.has(f.name)
-                                ? `Remove ${f.name} from bookmarks`
-                                : `Bookmark ${f.name}`
-                            }
-                            aria-pressed={favorites.has(f.name)}
-                            disabled={!favorites.has(f.name) && favorites.size >= MAX_FAVORITES ? true : undefined}
-                          >
-                            <Bookmark
-                              size={15}
-                              strokeWidth={1.85}
-                              fill={favorites.has(f.name) ? 'currentColor' : 'transparent'}
-                              aria-hidden
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className={`${MID}`} onScroll={onMidScroll} role="presentation">
-                        <div className="flex min-h-full w-max items-stretch">
-                          {visibleMidCols.map(col => renderMidCell(col, p))}
-                        </div>
-                      </div>
-
-                      <div className={`${PIN_PRICE}`} role="cell">
-                        <div className="flex w-full items-center justify-end gap-2.5">
-                          <div className="flex min-w-0 flex-col items-end gap-0.5 text-right">
-                            <span className="inline-flex items-center gap-1">
-                              <span className="text-[1.05rem] font-extrabold tracking-tight tabular-nums text-white">
-                                {formatMoney(displayPrice)}
-                              </span>
-                              {p.priceNote ? (
-                                <InfoTip text={p.priceNote} label="Other price options for this plan" />
-                              ) : null}
-                            </span>
-                            {showWas ? (
-                              <span className="text-[0.72rem] text-slate-500 line-through tabular-nums">
-                                {formatMoney(listPrice)}
-                              </span>
-                            ) : null}
-                            <span className="text-[0.65rem] lowercase text-slate-500">
-                              {String(p.priceType || 'One Time').toLowerCase()}
-                            </span>
-                          </div>
-                          {websiteHref ? (
-                            <PfgPrimary
-                              href={websiteHref}
-                              compact
-                              className="h-8 rounded-full! px-3.5"
-                              target="_blank"
-                              rel="noopener noreferrer sponsored"
-                            >
-                              KAGE
-                            </PfgPrimary>
-                          ) : (
-                            <span className="inline-flex h-8 shrink-0 items-center rounded-full bg-white/5 px-3 text-[0.75rem] font-bold text-slate-500">
-                              —
-                            </span>
-                          )}
-                        </div>
+                <div className="cmp-virtual-sizer">
+                  <div className={`${ROW} cmp-virtual-width-probe`} aria-hidden>
+                    <div className={PIN_FIRM} />
+                    <div className={MID}>
+                      <div className="flex w-max items-stretch">
+                        {visibleMidCols.map(col => (
+                          <div
+                            key={col.key}
+                            className={MID_CELL}
+                            style={{ flex: `0 0 ${col.min}px`, minWidth: col.min }}
+                          />
+                        ))}
                       </div>
                     </div>
-                  );
-                })
+                    <div className="cmp-edge-cta">
+                      <div className={PIN_PROMO} />
+                      <div className={PIN_VISIT} />
+                    </div>
+                  </div>
+                  <div
+                    className="cmp-virtual-list"
+                    ref={listRef}
+                    style={{ height: rowVirtualizer.getTotalSize() }}
+                  >
+                    {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                      const item = filtered[virtualRow.index];
+                      if (!item) return null;
+                      return (
+                        <div
+                          key={virtualRow.key}
+                          data-index={virtualRow.index}
+                          ref={rowVirtualizer.measureElement}
+                          className="cmp-virtual-row"
+                          style={{
+                            top: virtualRow.start - listOffset,
+                          }}
+                        >
+                          <ChallengeRow
+                            index={virtualRow.index}
+                            firm={item.firm}
+                            plan={item.plan}
+                            visibleMidCols={visibleMidCols}
+                            applyDiscount={applyDiscount}
+                            favorites={favorites}
+                            toggleFavorite={toggleFavorite}
+                            copiedKey={copiedKey}
+                            copyCode={copyCode}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
-
-            {filtered.length > 0 && (
-              <nav className="mt-3 flex flex-wrap items-center justify-center gap-2.5" aria-label="Table pagination">
-                <div className="flex flex-wrap items-center justify-center gap-1">
-                  <button
-                    type="button"
-                    className="inline-flex min-h-7 items-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[0.72rem] font-semibold text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page <= 1 ? true : undefined}
-                    aria-label="Previous page"
-                  >
-                    Previous
-                  </button>
-                  {pageItems.map((item, idx) =>
-                    item === '…' ? (
-                      <span key={`e-${idx}`} className="inline-flex h-7 w-5 items-center justify-center text-[0.75rem] font-bold text-slate-500" aria-hidden>
-                        …
-                      </span>
-                    ) : (
-                      <button
-                        key={item}
-                        type="button"
-                        className={`size-7 rounded-[7px] text-[0.72rem] font-semibold ${
-                          page === item
-                            ? 'bg-[#3FB185] text-[#0a0f0d]'
-                            : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                        }`}
-                        onClick={() => setPage(item)}
-                        aria-label={`Page ${item}`}
-                        aria-current={page === item ? 'page' : undefined}
-                      >
-                        {item}
-                      </button>
-                    )
-                  )}
-                  <button
-                    type="button"
-                    className="inline-flex min-h-7 items-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[0.72rem] font-semibold text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
-                    onClick={() => setPage(p => Math.min(p, totalPages))}
-                    disabled={page >= totalPages ? true : undefined}
-                    aria-label="Next page"
-                  >
-                    Next
-                  </button>
-                </div>
-                <span className="text-[0.72rem] text-slate-500" aria-live="polite">
-                  {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–
-                  {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-                </span>
-              </nav>
-            )}
+            </div>
           </div>
         </div>
       </div>

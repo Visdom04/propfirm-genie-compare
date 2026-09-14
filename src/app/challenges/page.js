@@ -5,8 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Compare Prop Challenges',
-  description:
-    'Filter by size, steps, and price — rules, drawdown, and KAGE pricing in one table.',
+  description: 'Compare challenges by size, steps, drawdown, and KAGE price.',
 };
 
 export default async function ChallengesPage() {

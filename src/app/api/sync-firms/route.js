@@ -52,6 +52,10 @@ export async function POST(request) {
 
   try {
     const result = buildFirmsFromTsv(plansTsv, firmsTsv);
+    const warnings = result.validation?.warnings || [];
+    if (warnings.length) {
+      console.warn('[sync-firms]', result.error || 'partial', warnings.slice(0, 20));
+    }
 
     if (!result.ok) {
       return NextResponse.json(
@@ -65,7 +69,7 @@ export async function POST(request) {
       );
     }
 
-    const saved = saveFirmsCatalog({
+    const saved = await saveFirmsCatalog({
       firms: result.firms,
       source: 'google-sheet-push',
       syncedAt: result.syncedAt,
@@ -78,13 +82,29 @@ export async function POST(request) {
     revalidatePath('/overview');
     revalidatePath('/compare');
 
+    const lucid = result.firms.find(f => f.name === 'Lucid Trading');
+    const tradeify = result.firms.find(f => f.name === 'Tradeify');
+    const warningCount = warnings.length;
+    console.info('[sync-firms] saved', {
+      persisted: saved.persisted,
+      firmCount: result.firms.length,
+      lucidReviews: lucid?.reviews ?? null,
+      tradeifyReviews: tradeify?.reviews ?? null,
+      warningCount,
+    });
     return NextResponse.json({
       ok: true,
-      message: 'Sheet synced via Apps Script push.',
+      message: result.partial
+        ? 'Sheet synced with warnings — invalid plan rows skipped. Firms tab applied.'
+        : 'Sheet synced via Apps Script push.',
       stats: result.stats,
-      warnings: result.validation?.warnings || [],
       syncedAt: saved.syncedAt,
+      persisted: saved.persisted,
       firmCount: result.firms.length,
+      lucidReviews: lucid?.reviews ?? null,
+      tradeifyReviews: tradeify?.reviews ?? null,
+      warningCount,
+      warnings: warnings.slice(0, 8),
     });
   } catch (err) {
     return NextResponse.json(
@@ -96,7 +116,9 @@ export async function POST(request) {
 
 export async function GET(request) {
   if (!checkSecret(request)) return unauthorized();
-  const live = readFirmsCatalog();
+  const live = await readFirmsCatalog();
+  const lucid = live?.firms?.find(f => f.name === 'Lucid Trading');
+  const tradeify = live?.firms?.find(f => f.name === 'Tradeify');
   return NextResponse.json({
     ok: true,
     configured: isSheetSyncConfigured(),
@@ -104,5 +126,7 @@ export async function GET(request) {
     hasLiveCatalog: Boolean(live?.firms?.length),
     syncedAt: live?.syncedAt || null,
     firmCount: live?.firms?.length || 0,
+    lucidReviews: lucid?.reviews ?? null,
+    tradeifyReviews: tradeify?.reviews ?? null,
   });
 }

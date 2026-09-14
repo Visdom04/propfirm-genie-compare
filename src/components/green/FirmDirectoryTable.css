@@ -1,0 +1,177 @@
+.dir-workbench {
+  --pfg-nav-h: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: none;
+}
+
+.dir-chrome {
+  flex-shrink: 0;
+  background: #08120e;
+}
+
+.dir-sticky-top {
+  position: sticky;
+  top: var(--pfg-nav-h, 3.5rem);
+  z-index: 12;
+  min-width: 0;
+  background: #08120e;
+}
+
+.dir-head-rail {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: #060c0a;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 767px) {
+  .dir-workbench {
+    --pfg-nav-h: 2.75rem;
+  }
+
+  .dir-chrome-bar {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+}
+
+.dir-board {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: clip;
+  -webkit-overflow-scrolling: touch;
+  background: #060c0a;
+}
+
+.dir-head {
+  position: relative;
+  z-index: 8;
+  isolation: isolate;
+  width: max-content;
+  min-width: 100%;
+  background: #060c0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 18px rgba(6, 12, 10, 0.92);
+}
+
+@media (max-width: 767px) {
+  .dir-cols {
+    min-width: 820px;
+    grid-template-columns: minmax(148px, 1.15fr) minmax(88px, 0.75fr) minmax(78px, 0.7fr) 48px minmax(84px, 0.7fr) minmax(86px, 0.7fr) minmax(72px, 0.6fr) 84px 108px;
+    column-gap: 6px;
+  }
+
+  .dir-head {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .dir-head button {
+    font-size: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+
+  .dir-firm-mark {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    border-radius: 8px !important;
+    padding: 1px !important;
+    border-width: 1.5px !important;
+  }
+
+  .dir-cols .truncate.text-\[0\.92rem\] {
+    font-size: 0.72rem;
+  }
+
+  .dir-cols .text-\[0\.78rem\] {
+    font-size: 0.62rem;
+  }
+
+  .dir-cols .text-\[0\.7rem\] {
+    font-size: 0.58rem;
+  }
+
+  .dir-cols .text-\[0\.75rem\] {
+    font-size: 0.6rem;
+  }
+
+  .dir-cols .text-\[0\.68rem\] {
+    font-size: 0.56rem;
+  }
+
+  .dir-cols .text-\[0\.65rem\] {
+    font-size: 0.52rem;
+  }
+
+  .dir-cols .text-\[0\.95rem\] {
+    font-size: 0.72rem;
+  }
+
+  .dir-years {
+    transform: scale(0.68);
+    transform-origin: center;
+  }
+
+  .dir-platforms img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .dir-platforms .platform-more {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 0.48rem !important;
+  }
+
+  .dir-row .rounded-full.border.px-2 {
+    padding: 1px 6px;
+  }
+
+  .dir-row a,
+  .dir-row .min-h-9 {
+    min-height: 24px !important;
+    padding: 2px 6px !important;
+    font-size: 0.58rem !important;
+  }
+
+  .dir-view-btn {
+    width: 100%;
+    min-height: 26px !important;
+    padding: 0 6px !important;
+    font-size: 0.58rem !important;
+    gap: 2px !important;
+  }
+
+  .dir-view-btn > span:last-child {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .dir-row .text-\[0\.68rem\].font-bold,
+  .dir-row .text-\[0\.7rem\].font-bold {
+    font-size: 0.52rem !important;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+}
+
+@media print {
+  .dir-workbench {
+    max-height: none !important;
+  }
+
+  .dir-board {
+    overflow: visible !important;
+  }
+}

@@ -16,8 +16,8 @@ import {
   pickDefaultSize,
   pickWinner,
 } from '@/lib/compareHighlights';
-import { PLATFORM_MARK, platformLogo } from '@/lib/platformLogos';
 import { firmLogo } from '@/lib/firmLogos';
+import PlatformLogo from '@/components/green/PlatformLogo';
 import { listPriceOf, salePriceOf } from '@/lib/planPrice';
 import GreenPageShell from '@/components/green/GreenPageShell';
 import { FocusWord, PfgGhost, PfgPrimary } from '@/components/green/PfgControls';
@@ -192,7 +192,7 @@ function PickerMenu({ items, onPick, onClose, searchable = false, selectedKey })
 
   return (
     <div
-      className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-white/10 bg-[#0c1612] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+      className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto scrollbar-pfg rounded-2xl border border-white/10 bg-[#0c1612] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
       ref={ref}
       role="listbox"
     >
@@ -493,31 +493,15 @@ function PlatformCell({ platforms }) {
   return (
     <div className="flex min-h-18 items-center px-5 py-5">
       <ul className="m-0 flex flex-wrap gap-1.5 p-0">
-        {list.map(name => {
-          const src = platformLogo(name);
-          const mark = PLATFORM_MARK[name] || { abbr: name.slice(0, 2).toUpperCase(), tone: 'bg-[#1a2e24]' };
-          return (
+        {list.map(name => (
             <li
               key={name}
               className="inline-flex items-center gap-1.5 rounded-lg border border-white/8 bg-[#08120e] py-1 pr-2 pl-1"
             >
-              {src ? (
-                <img
-                  src={src}
-                  alt=""
-                  width={28}
-                  height={28}
-                  className="size-7 rounded-md bg-white object-contain"
-                />
-              ) : (
-                <span className={`grid size-7 place-items-center rounded-md text-[0.58rem] font-black tracking-tight text-white ${mark.tone}`}>
-                  {mark.abbr}
-                </span>
-              )}
+              <PlatformLogo name={name} size={28} rounded="md" className="border-0" />
               <span className="text-[0.7rem] font-semibold text-emerald-100">{name}</span>
             </li>
-          );
-        })}
+        ))}
       </ul>
     </div>
   );
@@ -703,7 +687,7 @@ export default function CompareFirmsH2H({ firms = [], popularPairs = [] }) {
             <FocusWord>Head to Head</FocusWord>
           </h1>
           <p className="mx-auto m-0 max-w-xl text-[15px] leading-relaxed text-white/70">
-            Pick two firms, then account type and size — costs, drawdowns, splits, and rules side by side.
+            Choose two firms, then a plan and size. Compare costs, drawdowns, splits, and rules.
           </p>
         </header>
 

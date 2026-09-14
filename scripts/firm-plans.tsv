@@ -1,4 +1,4 @@
-Firm	Plan Type	Account Size	Drawdown Type	Activation Fee	Profit Target	Max Drawdown	Max Contract	Consistency Rule Eval, Funded	Payout Freq.	Profit Split	Price	Promo CODE	Account Category	Min Trading Days	Daily Drawdown	News Trading	List Price	Discount %	Price Note
+Firm	Plan Type	Account Size	Drawdown Type	Activation Fee	Profit Target	Max Drawdown	Max Contract	Consistency Rule Eval, Funded	Payout Freq.	Profit Split	Price	Promo CODE	Account Category	Min Trading Days	Daily Drawdown	News Trading	List Price	Discount %	Price Note	Info
 Lucid Trading	Flex	25k	EOD	None	$1,250	$1,000	2 / 20	50% / None	Every 5 Days	90%	$55	KAGE	Challenge	2	None	both	$79	30	
 Lucid Trading	Direct	25k	EOD	None	— (Straight to Funded)	$1,000	2 / 20	None / 20%	Every 8 Days	90%	$230	KAGE	S2F	8	None	both	$329	30	
 Lucid Trading	Pro	25k	EOD	None	$1,250	$1,000	2 / 20	None / 40%	Every 3 Days	90%	$76	KAGE	Challenge	1	None	both	$108	30	
@@ -35,11 +35,11 @@ Tradeify	Growth	150k	EOD	None	$9,000	$5,000	12 / 120	None / 35%	5 days with Mini
 Tradeify	Select Daily	150k	EOD	None	$9,000	$4,500	12 / 120	40%	Daily eligibility after meeting buffer requirement	90%	$221.40	KAGE	Challenge	None	None	both			
 Tradeify	Select Flex	150k	EOD	None	$9,000	$4,500	12 / 120	40%	5 Winning Days | 150K Account: $250 minimum profit per day	90%	$221.40	KAGE	Challenge	None	None	both			
 Tradeify	Lightning	150k	EOD	None	— (Instant Funded)	$5,250	12 / 120	None / 20%	Not Fixed (Payout Profit Goals are the profits required between payout requests.)	90%	$477.60	KAGE	S2F	None	None	both			
-Take Profit Trader	Test	25k	EOD	$130.00 | Free when using KAGE code	$1,500	$1,500	3 / 30	50% / None	Daily Payout	80%	$90.00	KAGE	Challenge	None	None	both			
-Take Profit Trader	Test	50k	EOD	$130.00 | Free when using KAGE code	$3,000	$2,000	6 / 60	50% / None	Daily Payout	80%	$102.00	KAGE	Challenge	None	None	both			
-Take Profit Trader	Test	75k	EOD	$130.00 | Free when using KAGE code	$4,500	$2,500	9 / 90	50% / None	Daily Payout	80%	$147	KAGE	Challenge	None	None	both			
-Take Profit Trader	Test	100k	EOD	$130.00 | Free when using KAGE code	$6,000	$3,000	12 / 120	50% / None	Daily Payout	80%	$198	KAGE	Challenge	None	None	both			
-Take Profit Trader	Test	150k	EOD	$130.00 | Free when using KAGE code	$9,000	$4,500	15 / 150	50% / None	Daily Payout	80%	$216	KAGE	Challenge	None	None	both			
+Take Profit Trader	Test	25k	EOD	$130 · Free with KAGE	$1,500	$1,500	3 / 30	50% / None	Daily Payout	80%	$90.00	KAGE	Challenge	None	None	both
+Take Profit Trader	Test	50k	EOD	$130 · Free with KAGE	$3,000	$2,000	6 / 60	50% / None	Daily Payout	80%	$102.00	KAGE	Challenge	None	None	both
+Take Profit Trader	Test	75k	EOD	$130 · Free with KAGE	$4,500	$2,500	9 / 90	50% / None	Daily Payout	80%	$147	KAGE	Challenge	None	None	both
+Take Profit Trader	Test	100k	EOD	$130 · Free with KAGE	$6,000	$3,000	12 / 120	50% / None	Daily Payout	80%	$198	KAGE	Challenge	None	None	both
+Take Profit Trader	Test	150k	EOD	$130 · Free with KAGE	$9,000	$4,500	15 / 150	50% / None	Daily Payout	80%	$216	KAGE	Challenge	None	None	both
 My Funded Futures	Builder	25k	EOD	None	$1,500	$1,000	2 / 20	None / 50%	Every 48 hours	80%	$52.50	KAGE	Challenge	None	None	both			
 My Funded Futures	Rapid	25k	EOD(intraday trailing)	None	$1,500	$1,000	3 / 30	50%	24h after first trade	90%	$54.50	KAGE	Challenge	None	None	both			
 My Funded Futures	Flex	25k	EOD	None	$1,500	$1,000	2 / 20	50%	5 winning days	80%	$85.50	KAGE	Challenge	None	None	both			

@@ -111,6 +111,7 @@ const outRows = rows.map(row => {
     'List Price': row.listPrice || '',
     'Discount %': row.discountPct || '',
     'Price Note': row.priceNote || '',
+    Info: row.info || '',
   };
 
   for (const [k, v] of Object.entries(coreMap)) {

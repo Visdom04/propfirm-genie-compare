@@ -3,11 +3,11 @@
  * Firms not in the sheet stay at the end in this same file’s leftover list.
  */
 export const FIRM_RANK_ORDER = [
-  'Take Profit Trader',
+  'Lucid Trading',
   'Tradeify',
   'Bulenox',
+  'Take Profit Trader',
   'My Funded Futures',
-  'Lucid Trading',
   'Legends Trading',
   'Nexgen ProTrader Funding',
   'FundedNext Futures',

@@ -1,6 +1,6 @@
 # Prop Firm Genie — four-page compare handoff
 
-This repository **is** the share pack: four compare pages, the sheet pipeline, and these instructions. Take them into [propfirmgenie.com](https://propfirmgenie.com). Read this first. Then read `scripts/DATA-PIPELINE.md` before touching data.
+This repository **is** the share pack: four compare pages, the Google Sheet pipeline, and these instructions. Take them into [propfirmgenie.com](https://propfirmgenie.com). Read this first. Then read `scripts/DATA-PIPELINE.md` before touching data.
 
 It is **not** the rest of the marketing / auth app. Do not clone `Visdom04/propfirm-genie` for this work.
 
@@ -39,6 +39,8 @@ Nav labels: Challenges · Firms · Overview · Head to head (`src/components/gre
 - Put a Price / KAGE CTA on the Overview pin. Price belongs on Challenges (per plan) and still appears as Eval / All-in mid-columns on Overview.
 - Rename sheet headers (`Payout Freq.`, `List Price`, `Discount %`, `Promo CODE`, `Max Allocation`, `Rating`, `Reviews`, …).
 - Commit contractor PDFs, `PROPFIRM_LOGO/`, or `demo-2-handoff/` (stale — it still talks about `/demo-2`).
+- Box `/challenges`, `/overview`, or `/firms` in `max-height` / inner `overflow-y: auto`. The window scrolls; the board is `overflow-x: auto; overflow-y: clip`.
+- Put `--cmp-firm` / `--ov-firm` / `--dir-*` column vars only on the table board. They must sit on the **workbench** so the extracted sticky header rail lines up. The rail is `overflow: hidden; min-width: 0` and copies `scrollLeft` from the board. Extracting headers without that is what stacked/misaligned the titles.
 
 ## Copy these files
 
@@ -54,7 +56,8 @@ src/app/overview/page.js
 src/app/compare-page-2/page.js  # redirect → /overview
 src/app/compare/page.js
 src/app/compare-firms/page.js   # redirect → /compare (keeps query)
-src/proxy.js
+src/app/api/sync-firms/route.js
+src/proxy.js                    # this pack has no auth — keep NextResponse.next()
 ```
 
 ### UI
@@ -70,6 +73,10 @@ src/components/green/GreenPageShell.js
 src/components/green/SiteNav.js
 src/components/green/PfgControls.js
 src/components/green/FirmDirectoryTable.js
+src/components/green/FirmDirectoryTable.css
+src/components/green/PlatformLogo.js
+src/components/green/PlatformMarks.js
+src/components/green/TableScrollSlider.js
 src/components/compare/CompareFirmsH2H.js
 src/components/compare/CompareFirmsH2H.css
 ```
@@ -87,6 +94,7 @@ src/lib/compareHighlights.js
 src/lib/firmLogos.js
 src/lib/platformLogos.js
 src/lib/firmsApi.js             # slugify for H2H query params
+src/lib/firmSort.js
 src/data/firms.js               # GENERATED — do not hand-edit plan arrays
 ```
 
@@ -94,6 +102,8 @@ src/data/firms.js               # GENERATED — do not hand-edit plan arrays
 
 ```
 scripts/DATA-PIPELINE.md        # full column contract
+scripts/SHEET-SYNC-SETUP.md     # Apps Script → Vercel
+scripts/google-apps-script/SyncToVercel.gs
 scripts/firm-plans.tsv          # Plans tab export
 scripts/firms-meta.tsv          # Firms tab export
 scripts/sync-firm-plans.mjs
@@ -103,14 +113,20 @@ scripts/lib/plan-price.mjs
 scripts/lib/firm-plans-parser.mjs
 ```
 
-Logos: `src/lib/firmLogos.js` points at Supabase `genie-assets`. Local fallbacks live under `public/firm/`.
+Logos: `src/lib/firmLogos.js` and `src/lib/platformLogos.js` point at the public Supabase bucket `genie-assets`. Local fallbacks live under `public/firm/`.
+
+**Firm marks (Apex, a new prop firm, a rebrand):** upload `{Firm Name}.webp` to `genie-assets/firms/`. Paste the public URL in the Firms tab **Logo** column. An `https://` Logo cell wins over the built-in map — that is how you add a firm that is not in `FIRM_LOGOS` yet. Overwrite the same file to refresh art without changing the sheet.
+
+**Platform marks (NinjaTrader, a new broker):** there is no per-platform URL column. Upload `{Exact Name}.webp` to `genie-assets/platforms/`. Put that same name in the firm’s **Platforms** cell (`NinjaTrader, Tradovate, Rithmic`). Unknown names try `genie-assets/platforms/{Name}.webp` and fall back to initials if the file is missing.
+
+Do not put image files in the Google Sheet. Do not put a platform URL in the firm **Logo** column.
 
 ## Sheet sync (ops + agent)
 
 Two Google Sheet tabs:
 
 1. **Plans** → `scripts/firm-plans.tsv` — one row = one plan + account size.
-2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`, **Max Allocation**, **Rating**, **Reviews**. Do not add rank / country / years / platforms.
+2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`, **Max Allocation**, **Rating**, **Reviews**, **Country**, **Years**, **Assets**, **Platforms**, **Enabled**, **Logo**.
 
 After any sheet change:
 
@@ -152,7 +168,9 @@ If Overview looks wrong, fix the **sheet cell** or `compactPayout()` — do not 
 
 **Runtime vs baked data**
 
-All four pages load `getRuntimeFirms()`. Live Apps Script push (`/tmp` catalog) wins. Otherwise the site overlays `scripts/firms-meta.tsv` on baked `firms.js` (ratings, reviews, max allocation, affiliate). Challenges no longer hard-imports `firms.js`.
+All four pages load `getRuntimeFirms()`. Typing in Google Sheets does **not** live-update the site — use **PropFirm Sync → Sync sheet → site now**. That POST hits `SYNC_URL` (`https://propfirm-genie-two.vercel.app/api/sync-firms`) and, if set, `SYNC_URL_ALSO` (`https://propfirm-genie.vercel.app/api/sync-firms`). Plum is not a sync target. The optional Genie push must not fail the run. `propfirmgenie.com` does not expose this API yet.
+
+On localhost, `scripts/firms-meta.tsv` overlays Rating / Reviews / Max Allocation even if a stale `/tmp` catalog exists. Production keeps the Apps Script push as source of truth. Challenges no longer hard-imports `firms.js`.
 
 ## View firm URLs
 
@@ -181,19 +199,23 @@ Affiliate / KAGE checkout stays on **Challenges** (per-plan Price pin) and direc
 
 `src/app/challenges/page.js` → `DemoHeroGreen` → `FirmCompareDemoGreen`.
 
-H1: Compare Prop **Challenges**. Pin columns: Firm + Price (sale, strikethrough, KAGE). Mid columns include raw payout freq.
+H1: Compare Prop **Challenges**. Pin columns: Firm (left) · Promo + **View Firm** (right). Mid columns include raw payout freq. Profit split and Price use a smaller numeral than the other mid cells (smaller again on mobile). Mobile Promo / View Firm is a compact sticky stack (`--cmp-cta` in `FirmCompareDemoGreen.edges.css`).
+
+The list is **page-length** (the window scrolls). Body rows are **window-virtualized**: the page still contains every matching plan, but only on-screen rows (plus a small overscan) are in the DOM. Do not mount all ~200 plan rows at once, and do not switch to paged “load more.” Do not restore `max-height` on `.cmp-workbench` or `overflow-y: auto` on `.cmp-edge-board`. Position virtual rows with `top`, never `transform` — a transform on the row breaks sticky Firm / Promo / View Firm. Column widths (`--cmp-firm`, `--cmp-promo`, `--cmp-visit`, `--cmp-cta`) live on `.cmp-workbench` so the sticky header rail matches body columns. Filters + headers stick under the nav (`.cmp-sticky-top`).
 
 ### `/firms`
 
 `FirmDirectoryTable` inside `GreenPageShell`. One row per firm, ranked.
 
-H1: Browse Prop **Firms**.
+H1: Browse Prop **Firms**. Same page-length list as Challenges (`.dir-workbench { max-height: none }`, `.dir-board` is `overflow-x: auto; overflow-y: clip`). Filters + headers stick (`.dir-sticky-top`). Do not box the directory in `calc(100dvh …)`. Platforms: 3 marks + clickable **+N** (same `PlatformMarks` as Overview).
 
 ### `/overview`
 
 `FirmOverviewTable` + `summarizeFirm()` in `firmOverview.js`.
 
 H1: Prop Firm **Overview**. Pin: Firm (left) · **View firm** (right). No Price pin.
+
+Page-length list + sticky chrome/headers, same rules as Challenges (`--ov-firm` / `--ov-price` on `.ov-workbench`). Platforms show 3 marks, then **+N** — click to load the rest in a popover.
 
 Mid: account size range, plan types, platforms, S2F, eval from, activation, all-in, drawdown, max loss, days to pass, news, split, **compact payout**, max funded, discount, overview blurb.
 
@@ -220,15 +242,18 @@ H1: Compare **Head to Head**.
 npm run dev
 ```
 
-- [ ] `/challenges` — one row per plan; Price + KAGE still there; payout cell is the raw sheet text.
+- [ ] `/challenges` — one row per plan; Promo + View Firm on the right; page scroll (no inner table box); payout cell is the raw sheet text.
+- [ ] `/challenges` still one long page (~200 plans) but only ~20–40 rows in the DOM while scrolling; sticky Firm / Promo / View Firm still line up.
+- [ ] `/challenges` mobile — Promo / View Firm stay compact; Profit split % and Price $ are smaller than other mid cells.
 - [ ] `/` and `/demo-2` → `/challenges`.
-- [ ] `/overview` — no Price pin; **View firm** on Apex opens `https://propfirmgenie.com/firm/apex`.
+- [ ] `/overview` — no Price pin; **View firm** on Apex opens `https://propfirmgenie.com/firm/apex`; page scroll like Challenges.
 - [ ] Overview payout: Apex = `5 winning days` (not `$100 · $200 · $250…`). Tradeify / FundedNext are short cadence lists, not a paragraph dump.
-- [ ] `/firms` directory still lists firms.
+- [ ] `/firms` — directory lists firms; page scroll, not a boxed inner scroller.
 - [ ] `/compare` still highlights two picked plans.
 - [ ] `/demo-4` → `/firms`, `/compare-page-2` → `/overview`, `/compare-firms` → `/compare`.
 - [ ] After a dummy TSV edit: `validate:firms` → `sync:firms` → Challenges price/payout updates.
+- [ ] New firm logo: paste a Supabase `genie-assets/firms/…` URL in **Logo**, sync, mark appears. New platform: upload `platforms/{Name}.webp` and add the name to **Platforms**.
 
 ## Stack
 
-Next.js **16.2** App Router (`src/app`), React 19, Tailwind 4, lucide-react. Compare tables use a mix of Tailwind + page CSS (`FirmCompareDemoGreen.edges.css`, `FirmOverviewTable.css`). Framer Motion / Anime.js are not required for these four pages.
+Next.js **16.2** App Router (`src/app`), React 19, Tailwind 4, lucide-react, `@tanstack/react-virtual` (window virtualizer on Challenges). Compare tables use a mix of Tailwind + page CSS (`FirmCompareDemoGreen.edges.css`, `FirmOverviewTable.css`). Framer Motion / Anime.js are not required for these four pages. `@vercel/functions` is used for the live sheet catalog cache; localhost still works without it.

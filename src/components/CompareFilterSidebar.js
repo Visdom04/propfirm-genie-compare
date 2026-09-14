@@ -91,38 +91,55 @@ const chipClass = on =>
 
 function DualRange({ label, min, max, step = 1, value, onChange, format = v => v }) {
   const id = useId();
-  const lo = Math.min(value.min, value.max);
-  const hi = Math.max(value.min, value.max);
-  const span = Math.max(max - min, 1);
-  const leftPct = ((lo - min) / span) * 100;
-  const rightPct = ((hi - min) / span) * 100;
+  const [active, setActive] = useState('max');
+  const boundMin = Number(min);
+  const boundMax = Number(max);
+  const floor = Number.isFinite(boundMin) ? boundMin : 0;
+  const ceil = Number.isFinite(boundMax) ? boundMax : floor;
+  const loBound = Math.min(floor, ceil);
+  const hiBound = Math.max(floor, ceil);
+  const rawLo = Number(value?.min);
+  const rawHi = Number(value?.max);
+  const lo = Math.min(
+    Math.max(Number.isFinite(rawLo) ? rawLo : loBound, loBound),
+    hiBound
+  );
+  const hi = Math.min(
+    Math.max(Number.isFinite(rawHi) ? rawHi : hiBound, lo),
+    hiBound
+  );
+  const span = hiBound - loBound;
+  const leftPct = span <= 0 ? 0 : ((lo - loBound) / span) * 100;
+  const rightPct = span <= 0 ? 100 : ((hi - loBound) / span) * 100;
 
   return (
-    <div className="mb-3 w-full">
-      <div className="mb-1.5 flex items-center justify-between">
+    <div className="mb-4 w-full">
+      <div className="mb-1 flex items-center justify-between gap-3">
         <label className="text-[0.72rem] font-semibold text-green-200/80" htmlFor={`${id}-min`}>
           {label}
         </label>
-        <span className="text-[0.7rem] tabular-nums text-slate-400">
+        <span className="text-[0.7rem] tabular-nums text-white/55">
           {format(lo)} – {format(hi)}
         </span>
       </div>
-      <div className="relative h-6">
-        <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-white/10" aria-hidden />
+      <div className="pfg-dual-range">
+        <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-white/12" aria-hidden />
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#1B4B38] to-[#3FB185]"
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#3FB185]"
           style={{ left: `${leftPct}%`, width: `${Math.max(0, rightPct - leftPct)}%` }}
           aria-hidden
         />
         <input
           id={`${id}-min`}
-          className="range-thumb pointer-events-none absolute inset-x-0 top-0 z-[2] h-6 w-full appearance-none bg-transparent"
+          className="pfg-dual-range__input"
+          style={{ zIndex: active === 'min' ? 4 : 2 }}
           type="range"
-          min={min}
-          max={max}
+          min={loBound}
+          max={hiBound}
           step={step}
           value={lo}
           aria-label={`${label} minimum`}
+          onPointerDown={() => setActive('min')}
           onChange={e => {
             const next = Number(e.target.value);
             onChange({ min: Math.min(next, hi), max: hi });
@@ -130,22 +147,20 @@ function DualRange({ label, min, max, step = 1, value, onChange, format = v => v
         />
         <input
           id={`${id}-max`}
-          className="range-thumb pointer-events-none absolute inset-x-0 top-0 z-[3] h-6 w-full appearance-none bg-transparent"
+          className="pfg-dual-range__input"
+          style={{ zIndex: active === 'max' ? 4 : 3 }}
           type="range"
-          min={min}
-          max={max}
+          min={loBound}
+          max={hiBound}
           step={step}
           value={hi}
           aria-label={`${label} maximum`}
+          onPointerDown={() => setActive('max')}
           onChange={e => {
             const next = Number(e.target.value);
             onChange({ min: lo, max: Math.max(next, lo) });
           }}
         />
-      </div>
-      <div className="mt-0.5 flex justify-between text-[0.65rem] text-slate-500" aria-hidden>
-        <span>{format(min)}</span>
-        <span>{format(max)}</span>
       </div>
     </div>
   );
@@ -239,9 +254,9 @@ export default function CompareFilterSidebar({
           </button>
         </div>
 
-        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4">
+        <div className="scrollbar-pfg min-h-0 flex-1 overflow-y-auto px-4">
           <Accordion title={`Firms · ${firmList.length}`} defaultOpen>
-            <div className="flex max-h-56 w-full flex-col gap-1 overflow-y-auto pr-1" role="group" aria-label="Filter by firm">
+            <div className="scrollbar-pfg flex max-h-56 w-full flex-col gap-1 overflow-y-auto pr-1" role="group" aria-label="Filter by firm">
               {firmList.map(f => {
                 const on = draft.firms.includes(f.name);
                 return (
@@ -348,7 +363,7 @@ export default function CompareFilterSidebar({
                 format={v => `${v}%`}
               />
               <DualRange
-                label="Trustpilot / rating"
+                label="Rating"
                 min={bounds.rating.min}
                 max={bounds.rating.max}
                 step={0.1}

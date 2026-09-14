@@ -26,7 +26,7 @@ const NEW_FIRM_META = {
     reviews: 28,
     description:
       'Futures prop firm with Evaluation and Instant funded paths, progressive profit split to 100%.',
-    platforms: ['NinjaTrader', 'Tradovate'],
+    platforms: ['TradingView', 'CQG Web/Desktop', 'Sierra Chart', 'DeepCharts', 'MotiveWave', 'Bookmap', 'Jigsaw'],
     maxAccounts: '5',
     maxAlloc: '$150K',
     promoCode: 'KAGE',
@@ -49,7 +49,7 @@ const NEW_FIRM_META = {
     reviews: 42,
     description:
       'Futures prop firm with Trailing, EOD, Static, S2L, and Instant (S2F) account paths.',
-    platforms: ['NinjaTrader', 'Tradovate'],
+    platforms: ['ONYX', 'Quantower', 'MotiveWave', 'ATAS', 'Bookmap', 'Finamark', 'Jigsaw', 'Sierra Chart', 'VolFix', 'R|Trader Pro'],
     maxAccounts: '5',
     maxAlloc: '$300K',
     promoCode: 'KAGE',
@@ -95,7 +95,7 @@ const NEW_FIRM_META = {
     reviews: 39,
     description:
       'Futures prop firm since 2012 with Standard and No Activation Fee paths. 90% profit split, payouts every 5 trading days, news trading allowed.',
-    platforms: ['Project X', 'Plus500'],
+    platforms: ['TopstepX', 'Quantower'],
     maxAccounts: '—',
     maxAlloc: '$750,000',
     promoCode: 'KAGE',
@@ -292,6 +292,27 @@ function applyFirmMeta(block, meta) {
   if (typeof meta.reviews === 'number') {
     next = next.replace(/reviews:\s*\d+/, `reviews: ${meta.reviews}`);
   }
+  if (meta.discount) {
+    if (/discount:/.test(next)) {
+      next = next.replace(/discount:\s*(?:'[^']*'|"[^"]*")/, `discount: ${jsString(meta.discount)}`);
+    }
+  }
+  if (meta.countryCode) {
+    next = next.replace(/countryCode:\s*(?:'[^']*'|"[^"]*")/, `countryCode: ${jsString(meta.countryCode)}`);
+  }
+  if (typeof meta.years === 'number') {
+    next = next.replace(/years:\s*[\d.]+/, `years: ${meta.years}`);
+    const label = String(meta.yearsLabel ?? meta.years);
+    if (/yearsLabel:/.test(next)) {
+      next = next.replace(/yearsLabel:\s*(?:'[^']*'|"[^"]*")/, `yearsLabel: ${jsString(label)}`);
+    }
+  }
+  if (Array.isArray(meta.assets) && meta.assets.length) {
+    next = next.replace(/assets:\s*\[[^\]]*\]/, `assets: ${jsArray(meta.assets)}`);
+  }
+  if (Array.isArray(meta.platforms) && meta.platforms.length) {
+    next = next.replace(/platforms:\s*\[[^\]]*\]/, `platforms: ${jsArray(meta.platforms)}`);
+  }
   return next;
 }
 
@@ -368,6 +389,14 @@ async function main() {
     if (sheetMeta?.maxAlloc) meta.maxAlloc = sheetMeta.maxAlloc;
     if (typeof sheetMeta?.rating === 'number') meta.rating = sheetMeta.rating;
     if (typeof sheetMeta?.reviews === 'number') meta.reviews = sheetMeta.reviews;
+    if (sheetMeta?.discount) meta.discount = sheetMeta.discount;
+    if (sheetMeta?.countryCode) meta.countryCode = sheetMeta.countryCode;
+    if (typeof sheetMeta?.years === 'number') {
+      meta.years = sheetMeta.years;
+      meta.yearsLabel = sheetMeta.yearsLabel || String(sheetMeta.years);
+    }
+    if (Array.isArray(sheetMeta?.assets) && sheetMeta.assets.length) meta.assets = sheetMeta.assets;
+    if (Array.isArray(sheetMeta?.platforms) && sheetMeta.platforms.length) meta.platforms = sheetMeta.platforms;
     for (const p of plans) p.popularity = meta.likes;
     const block = serializeFirm(meta, plans, 2);
     const insertAt = src.lastIndexOf('\n];');

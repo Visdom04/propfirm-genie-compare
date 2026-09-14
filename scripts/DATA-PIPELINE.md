@@ -83,8 +83,23 @@ npm run sync:firms            # optional: bake into firms.js
 | Max Allocation | $150K |
 | Rating | 4.7 |
 | Reviews | 323 |
+| Offer | 30–40% OFF |
+| Country | US |
+| Years | 6 |
+| Assets | Futures |
+| Platforms | NinjaTrader, Tradovate, Rithmic |
+| Enabled | YES |
+| Logo | https://….supabase.co/storage/v1/object/public/genie-assets/firms/New%20Firm.webp |
 
-Do **not** add Rank, Country, Years, or Platforms to this tab. Apps Script pushes the whole Firms sheet as TSV. Those fields stay in `src/data/firms.js`.
+**Country** is the 2-letter code (`US`, `AE`, `CY`, …) or the full name (`United States`). **Years** is a number (the ring on `/firms`). **Assets** and **Platforms** are comma-separated. Platform logos resolve from the name: change `TradingView` to `NinjaTrader` (or `NT`) and the icon updates. Unknown names try `genie-assets/platforms/{Name}.webp`.
+
+**Enabled** hides a firm on every page without deleting rows. `YES` / `true` / blank = show. `NO` / `false` / `hide` = drop from `/firms`, `/overview`, `/challenges`, and `/compare`. Plans rows can stay on the Plans tab.
+
+**Logo** is a public image URL (Supabase storage is the usual host). Paste it, sync, and that firm’s mark updates. An `https://` cell wins over `src/lib/firmLogos.js` — use that for a brand-new firm. Overwrite the same Storage object to refresh art without changing the sheet.
+
+**Platforms** are names only, not URLs. Upload `{Exact Name}.webp` to `genie-assets/platforms/` and use that spelling in the cell. Unknown names try `genie-assets/platforms/{Name}.webp`.
+
+Blank Country / Years / Assets / Platforms = keep the last known value. Do **not** add Rank to this tab.
 
 **Rating** is 0–5 (one decimal is fine). **Reviews** is the count only (`323`, not `323 reviews`). Blank cell = leave the last known value. `0` is a real value (shows as no reviews).
 

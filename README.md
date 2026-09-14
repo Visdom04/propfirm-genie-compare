@@ -15,6 +15,8 @@ Read **[HANDOFF.md](./HANDOFF.md)** first (written for a developer or a coding a
 
 `/` and `/demo-2` redirect to `/challenges`. Old demo URLs (`/demo-4`, `/compare-page-2`, `/compare-firms`) redirect to the names above.
 
+Challenges is **one long page** (window-virtualized rows). Overview and Firms are one row per firm. Do not add pagination.
+
 ## Run
 
 ```bash

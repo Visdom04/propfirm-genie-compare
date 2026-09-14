@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: `Compare Head to Head | ${BRAND_NAME}`,
   description:
-    'Pick two firms, account types, and sizes — see costs, drawdowns, profit splits, and rules with per-row highlights.',
+    'Choose two firms, then a plan and size. Compare costs, drawdowns, splits, and rules.',
 };
 
 function toCompareFirm(firm) {

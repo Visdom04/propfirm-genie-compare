@@ -41,5 +41,7 @@ export const FIRM_LOGOS = {
 };
 
 export function firmLogo(name, fallback) {
-  return FIRM_LOGOS[name] || fallback || null;
+  const extra = String(fallback || '').trim();
+  if (/^https?:\/\//i.test(extra)) return extra;
+  return FIRM_LOGOS[name] || extra || null;
 }
