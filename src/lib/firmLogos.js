@@ -1,3 +1,5 @@
+import { logoConflictsWithOtherFirm } from '../../scripts/lib/firm-identity.mjs';
+
 const BASE = 'https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms';
 const PUBLIC = 'https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/public';
 
@@ -24,6 +26,7 @@ export const FIRM_LOGOS = {
   'Legends Trading': asset('Legends%20Trading.webp'),
   'Lucid Trading': asset('Lucid%20Trading.webp'),
   'My Funded Futures': asset('My%20Funded%20Futures.webp'),
+  'My Funded Perps': asset('My%20Funded%20Perps.webp'),
   'Nexgen ProTrader Funding': asset('Nexgen%20ProTrader%20Funding.webp'),
   'Phidias Propfirm': asset('Phidias%20Propfirm.webp'),
   Purdia: asset('Purdia.webp'),
@@ -31,17 +34,28 @@ export const FIRM_LOGOS = {
   'Top One Futures': asset('Top%20One%20Futures.webp'),
   Topstep: asset('Topstep.webp'),
   Tradeify: asset('Tradeify_new.webp'),
+  'Tradeify 247': asset('Tradeify%20247.webp'),
   'Traders Launch': asset('Traders%20Launch.webp'),
-  'YRM Prop': asset('YRM%20Prop.webp'),
   'IQ Capital': asset('IQ%20Capital.webp'),
   FundedSeat: asset('FundedSeat.webp'),
   FTMO: asset('FTMO.webp'),
   'The Trading Pit': asset('The%20Trading%20Pit.webp'),
   'Funded Futures Network': asset('Funded%20Futures%20Network.webp'),
+  BluSky: asset('Blusky.webp'),
+  Blusky: asset('Blusky.webp'),
+  'FXIFY Futures': asset('fxifyfutures.webp'),
+  Earn2Trade: asset('Earn2Trade.webp'),
+  'Vest Markets': asset('Vest%20Markets.webp'),
 };
 
 export function firmLogo(name, fallback) {
   const extra = String(fallback || '').trim();
-  if (/^https?:\/\//i.test(extra)) return extra;
-  return FIRM_LOGOS[name] || extra || null;
+  const mapped = FIRM_LOGOS[name];
+  if (/^https?:\/\//i.test(extra)) {
+    if (logoConflictsWithOtherFirm(name, extra, Object.keys(FIRM_LOGOS))) {
+      return mapped || extra;
+    }
+    return extra;
+  }
+  return mapped || extra || null;
 }

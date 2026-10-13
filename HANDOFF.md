@@ -1,8 +1,8 @@
 # Prop Firm Genie — four-page compare handoff
 
-This repository **is** the share pack: four compare pages, the Google Sheet pipeline, and these instructions. Take them into [propfirmgenie.com](https://propfirmgenie.com). Read this first. Then read `scripts/DATA-PIPELINE.md` before touching data.
+Instruction file for a developer (or a coding agent) taking these pages into [propfirmgenie.com](https://propfirmgenie.com). Read this first. Then read `scripts/DATA-PIPELINE.md` before touching data. Latest sheet-column priority and mobile table notes: [`DEVELOPER-PICKUP.md`](DEVELOPER-PICKUP.md).
 
-It is **not** the rest of the marketing / auth app. Do not clone `Visdom04/propfirm-genie` for this work.
+This is **not** the rest of the marketing site. Only the four live compare surfaces plus the sheet pipeline.
 
 ## Product
 
@@ -69,8 +69,7 @@ src/app/overview/page.js
 src/app/compare-page-2/page.js  # redirect → /overview
 src/app/compare/page.js
 src/app/compare-firms/page.js   # redirect → /compare (keeps query)
-src/app/api/sync-firms/route.js
-src/proxy.js                    # this pack has no auth — keep NextResponse.next()
+src/proxy.js
 ```
 
 ### UI
@@ -107,7 +106,6 @@ src/lib/compareHighlights.js
 src/lib/firmLogos.js
 src/lib/platformLogos.js
 src/lib/firmsApi.js             # slugify for H2H query params
-src/lib/firmSort.js
 src/data/firms.js               # GENERATED — do not hand-edit plan arrays
 ```
 
@@ -115,8 +113,6 @@ src/data/firms.js               # GENERATED — do not hand-edit plan arrays
 
 ```
 scripts/DATA-PIPELINE.md        # full column contract
-scripts/SHEET-SYNC-SETUP.md     # Apps Script → Vercel
-scripts/google-apps-script/SyncToVercel.gs
 scripts/firm-plans.tsv          # Plans tab export
 scripts/firms-meta.tsv          # Firms tab export
 scripts/sync-firm-plans.mjs
@@ -139,7 +135,7 @@ Do not put image files in the Google Sheet. Do not put a platform URL in the fir
 Two Google Sheet tabs:
 
 1. **Plans** → `scripts/firm-plans.tsv` — one row = one plan + account size.
-2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`, **Max Allocation**, **Rating**, **Reviews**, **Country**, **Years**, **Assets**, **Platforms**, **Enabled**, **Logo**.
+2. **Firms** → `scripts/firms-meta.tsv` — affiliate link, last verified, `isPopular`, **Max Allocation**, **Rating**, **Reviews**, **Country**, **Years**, **Assets**, **Platforms**, **Enabled**, **Logo**, **Coming Soon**.
 
 After any sheet change:
 
@@ -274,4 +270,4 @@ npm run dev
 
 ## Stack
 
-Next.js **16.2** App Router (`src/app`), React 19, Tailwind 4, lucide-react, `@tanstack/react-virtual` (window virtualizer on Challenges). Compare tables use a mix of Tailwind + page CSS (`FirmCompareDemoGreen.edges.css`, `FirmOverviewTable.css`). Framer Motion / Anime.js are not required for these four pages. `@vercel/functions` is used for the live sheet catalog cache; localhost still works without it.
+Next.js **16.2** App Router (`src/app`), React 19, Tailwind 4, lucide-react. Compare tables use a mix of Tailwind + page CSS (`FirmCompareDemoGreen.edges.css`, `FirmOverviewTable.css`). Framer Motion / Anime.js are not required for these four pages.

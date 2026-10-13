@@ -90,10 +90,13 @@ npm run sync:firms            # optional: bake into firms.js
 | Platforms | NinjaTrader, Tradovate, Rithmic |
 | Enabled | YES |
 | Logo | https://….supabase.co/storage/v1/object/public/genie-assets/firms/New%20Firm.webp |
+| Coming Soon | NO |
 
 **Country** is the 2-letter code (`US`, `AE`, `CY`, …) or the full name (`United States`). **Years** is a number (the ring on `/firms`). **Assets** and **Platforms** are comma-separated. Platform logos resolve from the name: change `TradingView` to `NinjaTrader` (or `NT`) and the icon updates. Unknown names try `genie-assets/platforms/{Name}.webp`.
 
 **Enabled** hides a firm on every page without deleting rows. `YES` / `true` / blank = show. `NO` / `false` / `hide` = drop from `/firms`, `/overview`, `/challenges`, and `/compare`. Plans rows can stay on the Plans tab.
+
+**Coming Soon** is the label under the firm name (and the disabled CTA). `YES` / `true` / `soon` = show Coming soon. `NO` / `false` / `live` = remove the label and show rating/reviews like a live firm. Blank = automatic (Coming soon only when that firm has no Plans rows). Rating and Reviews still display whenever Rating is greater than 0.
 
 **Logo** is a public image URL (Supabase storage is the usual host). Paste it, sync, and that firm’s mark updates. An `https://` cell wins over `src/lib/firmLogos.js` — use that for a brand-new firm. Overwrite the same Storage object to refresh art without changing the sheet.
 

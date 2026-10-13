@@ -9,11 +9,16 @@ import {
   validateFirmPlans,
   rowToPlan,
 } from '../../scripts/lib/firm-plans-parser.mjs';
+import {
+  exactFirmName,
+  similarFirmNameWarnings,
+  unusedMetaFirmNames,
+} from '../../scripts/lib/firm-identity.mjs';
 
 export const FIRMS_SHEET_TAG = 'firms-sheet';
 
 /** Firms removed from all live pages — filtered from runtime catalog. */
-export const HIDDEN_FIRMS = new Set(['Earn2Trade']);
+export const HIDDEN_FIRMS = new Set(['One Up Trader', 'YRM Prop']);
 
 function withoutHiddenFirms(firms) {
   return firms.filter(f => !HIDDEN_FIRMS.has(f.name) && f.enabled !== false);
@@ -23,6 +28,49 @@ const CATALOG_PATH = path.join('/tmp', 'propfirm-firms-catalog.json');
 const CATALOG_CACHE_KEY = 'propfirm-firms-catalog-v1';
 const META_CACHE_KEY = 'propfirm-firms-meta-v1';
 const CATALOG_TTL_SEC = 60 * 60 * 24 * 14;
+
+function sheetOnlyFirm(name, meta = {}) {
+  return {
+    name,
+    logo: firmLogo(name, '/firm/placeholder.png'),
+    rating: 0,
+    reviews: 0,
+    description: `${name} synced from Google Sheet.`,
+    platforms: [],
+    maxAccounts: '—',
+    maxAlloc: '—',
+    promoCode: 'KAGE',
+    discount: 'No verified offer',
+    website: '',
+    type: 'Challenge',
+    countryCode: 'US',
+    likes: 1000,
+    years: 1,
+    yearsLabel: '1',
+    assets: ['Futures'],
+    accountSizes: [],
+    steps: [],
+    priceType: [],
+    allocPct: 0.5,
+    isNew: true,
+    isPopular: false,
+    comingSoon: true,
+    plans: [],
+  };
+}
+
+function appendMissingSheetFirms(firms, metaMap) {
+  if (!metaMap?.size) return firms;
+  const extra = unusedMetaFirmNames(
+    metaMap,
+    firms.map(f => f.name)
+  );
+  if (!extra.length) return firms;
+  return [
+    ...firms,
+    ...extra.map(name => applyFirmSheetMeta(sheetOnlyFirm(name), metaMap.get(name) || {})),
+  ];
+}
 
 function applyFirmSheetMeta(firm, meta = {}) {
   if (!meta || !Object.keys(meta).length) return firm;
@@ -44,17 +92,19 @@ function applyFirmSheetMeta(firm, meta = {}) {
     ...(Array.isArray(meta.platforms) && meta.platforms.length ? { platforms: meta.platforms } : {}),
     ...(typeof meta.enabled === 'boolean' ? { enabled: meta.enabled } : {}),
     ...(meta.logo ? { logo: firmLogo(firm.name, meta.logo) } : {}),
+    ...(typeof meta.comingSoon === 'boolean' ? { comingSoon: meta.comingSoon } : {}),
   };
 }
 
 function mergeSheetIntoFirms(parsedPlans, metaMap) {
   const byFirm = new Map();
   for (const { firmName, plan } of parsedPlans) {
-    if (!byFirm.has(firmName)) byFirm.set(firmName, []);
-    byFirm.get(firmName).push(plan);
+    const name = exactFirmName(firmName);
+    if (!byFirm.has(name)) byFirm.set(name, []);
+    byFirm.get(name).push(plan);
   }
 
-  const staticByName = new Map(staticFirms.map(f => [f.name, f]));
+  const staticByName = new Map(staticFirms.map(f => [exactFirmName(f.name), f]));
   const result = [];
 
   for (const [name, plans] of byFirm) {
@@ -74,7 +124,7 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
           {
             ...base,
             logo: firmLogo(name, base.logo),
-            comingSoon: plans.length === 0,
+            comingSoon: typeof meta.comingSoon === 'boolean' ? meta.comingSoon : plans.length === 0,
             accountSizes: sizes,
             steps,
             priceType: priceTypes,
@@ -111,7 +161,7 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
             allocPct: 0.5,
             isNew: true,
             isPopular: false,
-            comingSoon: false,
+            comingSoon: typeof meta.comingSoon === 'boolean' ? meta.comingSoon : false,
             plans,
           },
           meta
@@ -121,10 +171,11 @@ function mergeSheetIntoFirms(parsedPlans, metaMap) {
   }
 
   for (const f of staticFirms) {
-    if (!byFirm.has(f.name)) result.push(applyFirmSheetMeta(f, metaMap.get(f.name)));
+    const name = exactFirmName(f.name);
+    if (!byFirm.has(name)) result.push(applyFirmSheetMeta(f, metaMap.get(name)));
   }
 
-  return result;
+  return appendMissingSheetFirms(result, metaMap);
 }
 
 function planErrorLine(msg) {
@@ -134,7 +185,8 @@ function planErrorLine(msg) {
 
 function overlayMetaOnFirms(firms, metaMap) {
   if (!metaMap?.size) return firms;
-  return firms.map(f => applyFirmSheetMeta(f, metaMap.get(f.name) || {}));
+  const next = firms.map(f => applyFirmSheetMeta(f, metaMap.get(exactFirmName(f.name)) || {}));
+  return appendMissingSheetFirms(next, metaMap);
 }
 
 export function buildFirmsFromTsv(plansTsv, firmsTsv = '') {
@@ -186,6 +238,13 @@ export function buildFirmsFromTsv(plansTsv, firmsTsv = '') {
 
   const parsedPlans = goodRows.map(rowToPlan);
   const firms = mergeSheetIntoFirms(parsedPlans, metaMap);
+  warnings.push(
+    ...similarFirmNameWarnings([
+      ...firms.map(f => f.name),
+      ...metaMap.keys(),
+      ...goodRows.map(r => r.firmName),
+    ])
+  );
 
   return {
     ok: true,
@@ -219,13 +278,16 @@ function slimFirmMeta(firms = []) {
       ...(Array.isArray(f.platforms) && f.platforms.length ? { platforms: f.platforms } : {}),
       ...(typeof f.enabled === 'boolean' ? { enabled: f.enabled } : {}),
       ...(f.logo ? { logo: f.logo } : {}),
+      ...(typeof f.comingSoon === 'boolean' ? { comingSoon: f.comingSoon } : {}),
     };
   }
   return map;
 }
 
 function overlayMetaObject(firms, metaByName = {}) {
-  return firms.map(f => applyFirmSheetMeta(f, metaByName[f.name] || {}));
+  const metaMap = new Map(Object.entries(metaByName || {}));
+  const next = firms.map(f => applyFirmSheetMeta(f, metaByName[exactFirmName(f.name)] || {}));
+  return appendMissingSheetFirms(next, metaMap);
 }
 
 function isLiveCatalog(raw) {
@@ -333,7 +395,10 @@ function overlayLocalFirmMeta(firms) {
     if (!fs.existsSync(file)) return firms;
     const metaMap = parseFirmsMetaTsv(fs.readFileSync(file, 'utf8'));
     if (!metaMap.size) return firms;
-    return firms.map(f => applyFirmSheetMeta(f, metaMap.get(f.name) || {}));
+    return appendMissingSheetFirms(
+      firms.map(f => applyFirmSheetMeta(f, metaMap.get(exactFirmName(f.name)) || {})),
+      metaMap
+    );
   } catch {
     return firms;
   }

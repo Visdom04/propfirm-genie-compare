@@ -1,5 +1,5 @@
 {
-  "name": "propfirm-genie-compare",
+  "name": "propfirm",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,12 +10,17 @@
     "validate:firms": "node scripts/validate-firm-plans.mjs",
     "extend:firms": "node scripts/extend-firm-plans-cols.mjs",
     "sync:firms": "node scripts/sync-firm-plans.mjs",
-    "data:firms": "npm run extend:firms -- --write && npm run validate:firms && npm run sync:firms"
+    "data:firms": "npm run extend:firms -- --write && npm run validate:firms && npm run sync:firms",
+    "test:firm-identity": "node scripts/lib/firm-identity.test.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.109.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@tanstack/react-virtual": "^3.14.13",
     "@vercel/functions": "^3.9.7",
+    "animejs": "^3.2.2",
+    "framer-motion": "^12.42.2",
     "lucide-react": "^1.24.0",
     "next": "16.2.2",
     "react": "19.2.4",

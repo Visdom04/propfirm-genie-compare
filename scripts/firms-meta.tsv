@@ -1,24 +1,27 @@
-Firm	Affiliate Link	Last Verified	Verified By	isPopular	Max Allocation	Rating	Reviews	Offer	Country	Years	Assets	Platforms	Enabled	Logo
-Lucid Trading	https://lucidtrading.com/?ref=KAGE	2026-09-09	Prop Firm Compare	true	$750,000	4.7	200	30–40% OFF	US	1	Futures	NinjaTrader, Tradovate, TradingView, MotiveWave, Quantower, TradeSea, Sierra Chart, Jigsaw, Bookmap, ATAS, R|Trader Pro, MultiCharts
-Tradeify	https://tradeify.co/?ref=KAGE	2026-08-28	ops	true	$150K	4.7	200	Save $148 with code KAGE	US	2	Futures	Tradovate, NinjaTrader, TradingView, TradeSea, Quantower, Sierra Chart, R|Trader, WealthCharts
-Apex Trader Funding	https://apextraderfunding.com/?c=KAGE	2026-08-28	ops	true	$150K	3.8	117	Coupon One Pack (30-day eval, no resets)	US	6	Futures	NinjaTrader, Tradovate, TradingView, Quantower, Sierra Chart, ATAS, Bookmap, EdgeProX, Finamark, Jigsaw, MotiveWave, R|Trader Pro, VolFix, WealthCharts
-My Funded Futures	https://myfundedfutures.com/?ref=KAGE	2026-08-28	ops	true	$150K	4.5	244	Promo monthly pricing	US	4	Futures	NinjaTrader, Tradovate, TradingView, Quantower, Volumetrica, DeepDOM, ATAS
-Take Profit Trader	https://takeprofittrader.com/?referralCode=KAGE	2026-08-28	ops	false	$150K	3.1	18	40% OFF	US	5	Futures	TradingView, NinjaTrader, Tradovate, R|Trader, Quantower, Bookmap, MultiCharts, MotiveWave, VolFix, ATAS, Finamark, Jigsaw
-FundedNext Futures	https://fundednext.com/?fpr=KAGE	2026-08-28	ops	false	$500K	4.4	75	40% OFF	AE	3	Futures	Tradovate, NinjaTrader, TradingView
-IQ Capital	https://www.iqcapital.io/	2026-09-09	Prop Firm Compare	false	$2,000,000	0	0	80% OFF	LC	N/A	Futures	Volumetrica IQC Trader, DeepCharts, ATAS, Quantower
-Topstep	https://www.topstep.com/	2026-08-25	Prop Firm Compare	false	$750,000	3.4	39	No verified offer	US	14	Futures	TopstepX, Quantower
-Traders Launch	https://traderslaunch.com/	2026-04-20	Prop Firm Compare	false	$1,500,000	4.8	7	No verified offer	US	3	Futures	Quantower, TradingView, Volumetrica
-Top One Futures				true	$150K	4.7	86	Up to 55% OFF with KAGE	US	3	Futures	Tradovate, NinjaTrader, TradingView
-Purdia				true	$100K	4.5	48	25% OFF	US	2	Futures	Tradovate, NinjaTrader, TradingView
-YRM Prop				false	$150K	0	8	30% OFF with KAGE	US	1	Futures	TradeSea, Tradovate, TradingView
-Bulenox				false	$250K	4.1	175	Coupon $50OFF	US	4	Futures	R|Trader Pro, NinjaTrader, Quantower, Sierra Chart, MultiCharts, ATAS
-Phidias Propfirm				false	$200K	4.2	118	Monthly SAVE 60% with KAGE	US	3	Futures	Rithmic, DeepCharts, Tradovate, NinjaTrader, TradingView
-Legends Trading				false	$750K	4.3	164	LTG discount applied	US	3	Futures	Tradovate, NinjaTrader, Rithmic, Sierra Chart, Quantower
-E8 Futures				true	5 Funded	0	0	Save $37 with code KAGE	CY	4	Futures, Forex	Tradovate, TradingView
-Blue Guardian				true	$150K	0	0	25% OFF with KAGE	US	2	Futures	DeepCharts, Tradovate, NinjaTrader, TradingView
-Nexgen ProTrader Funding				false	$150K	4.2	28	KAGE promo pricing	US	2	Futures	TradingView, CQG Web/Desktop, Sierra Chart, DeepCharts, MotiveWave, Bookmap, Jigsaw
-DayTraders				true	$300K	4.3	42	KAGE promo pricing	US	2	Futures	ONYX, Quantower, MotiveWave, ATAS, Bookmap, Finamark, Jigsaw, Sierra Chart, VolFix, R|Trader Pro
-Funded Futures Network				false	—	0	0	Coming soon	US	—	Futures	ONYX, FundX, EdgeProX, MotiveWave Mobile, NinjaTrader
-The Trading Pit				false	—	0	0	Coming soon	US	—	Futures	ATAS, Jigsaw, MotiveWave, NinjaTrader, Quantower, R|Trader Pro, Sierra Chart, TradingView, Tradovate, VolFix, Volsys
-FundedSeat				false	—	0	0	Coming soon	US	—	Futures	WealthCharts, DeepCharts, TradeSea, Rithmic, Quantower, ATAS
-FTMO				false	—	0	0	Coming soon	CZ	—	Futures	NinjaTrader, Tradovate, TradingView
+Firm	Affiliate Link	Last Verified	Verified By	isPopular	Max Allocation	Rating	Reviews	Offer	Country	Years	Assets	Platforms	Enabled	Logo	Coming Soon
+Lucid Trading	https://bit.ly/lucid-discounts	2026-09-09	Prop Firm Compare	true	$1.5M	4.8	144	30–40% OFF	US	1	Futures	NinjaTrader, Tradovate, TradingView, MotiveWave, Quantower, TradeSea, Sierra Chart, Jigsaw, Bookmap, ATAS, R|Trader Pro, MultiCharts		
+Tradeify	https://bit.ly/tradeifydiscount	2026-08-28	ops	true	$750k	4.8	189	Save $148 with code KAGE	US	2	Futures	Tradovate, NinjaTrader, TradingView, TradeSea, Quantower, Sierra Chart, R|Trader, WealthCharts		https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Tradeify_new.webp
+Tradeify 247	https://bit.ly/tradeify-crypto		ops	true	$300,000		0		United States	0	Tokenized Indices, Crypto	DXTrade, MT5		https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Tradeify%20247.webp
+Apex Trader Funding	https://bit.ly/atfapextraderfunding	2026-08-28	ops	true	$6M	4.5	117	Coupon One Pack (30-day eval, no resets)	US	6	Futures	NinjaTrader, Tradovate, TradingView, Quantower, Sierra Chart, ATAS, Bookmap, EdgeProX, Finamark, Jigsaw, MotiveWave, R|Trader Pro, VolFix, WealthCharts		
+My Funded Futures	https://bit.ly/mff-discounts	2026-08-28	ops	true	$1.5M	4.7	244	Promo monthly pricing	US	4	Futures	NinjaTrader, Tradovate, TradingView, Quantower, Volumetrica, DeepDOM, ATAS		
+Take Profit Trader	https://bit.ly/take-profit-trader	2026-08-28	ops	false	$750K	4.8	18	40% OFF	US	5	Futures	TradingView, NinjaTrader, Tradovate, R|Trader, Quantower, Bookmap, MultiCharts, MotiveWave, VolFix, ATAS, Finamark, Jigsaw		
+FundedNext Futures	https://bit.ly/fundednextfutures-discounts	2026-08-28	ops	false	$750K	4.7	75	40% OFF	AE	3	Futures	Tradovate, NinjaTrader, TradingView		
+IQ Capital	https://bit.ly/iqcapital-discounts	2026-09-09	Prop Firm Compare	false	$2M	0	0	80% OFF	LC	N/A	Futures	Quantower, Tradovate, ATAS, DeepCharts		
+Topstep	https://bit.ly/topsteptraderfunding	2026-08-25	Prop Firm Compare	false	$750K	4.3	39	No verified offer	US	14	Futures	TopstepX, Quantower		
+Traders Launch	https://bit.ly/traders-launch-discounts	2026-04-20	Prop Firm Compare	false	$1.5M	4.8	7	No verified offer	US	3	Futures	Quantower, TradingView, Volumetrica		
+Top One Futures	https://bit.ly/toponefutures-discounts			true	$4.2M	3.8	86	Up to 55% OFF with KAGE	US	3	Futures	Tradovate, NinjaTrader, TradingView		
+Purdia	https://bit.ly/purdia-discounts			true	$300K	4.2	48	25% OFF	US	2	Futures	Tradovate, NinjaTrader, TradingView		
+Bulenox	https://bit.ly/bulenoxtrading			false	$750K	4.8	175	Coupon $50OFF	US	4	Futures	R|Trader Pro, NinjaTrader, Quantower, Sierra Chart, MultiCharts, ATAS		
+Phidias Propfirm	https://bit.ly/phidias-discounts			false	$1.75M	4.5	118	Monthly SAVE 60% with KAGE	US	3	Futures	Rithmic, DeepCharts, Tradovate, NinjaTrader, TradingView		
+Legends Trading	https://bit.ly/legends-discounts			false	$750K	4.5	164	LTG discount applied	US	3	Futures	Tradovate, NinjaTrader, Rithmic, Sierra Chart, Quantower		
+E8 Futures	https://bit.ly/e8-futures-discounts			true	$1.35M	4.4	0	Save $37 with code KAGE	CY	4	Futures, Forex	Tradovate, TradingView		
+Blue Guardian	https://bit.ly/blueguardian-discounts			true	$750K	0	0	25% OFF with KAGE	US	2	Futures	TRADOVATE, DEEPCHART		
+Nexgen ProTrader Funding	https://bit.ly/nexgenfunding-discounts			false	$150K	4.5	28	KAGE promo pricing	US	2	Futures	TradingView, CQG Web/Desktop, Sierra Chart, DeepCharts, MotiveWave, Bookmap, Jigsaw		
+DayTraders	https://bit.ly/daytraders-discounts			true	$4.5M	4.1	42	KAGE promo pricing	US	2	Futures	ONYX, Quantower, MotiveWave, ATAS, Bookmap, Finamark, Jigsaw, Sierra Chart, VolFix, R|Trader Pro		
+Funded Futures Network	https://bit.ly/ffn-discounts			false	$1.25M	4.7	0	KAGE promo pricing	US	—	Futures	ONYX, FundX, EdgeProX, MotiveWave Mobile, NinjaTrader		
+The Trading Pit	https://bit.ly/thetradingpit-discounts			false	$750K	0	0	KAGE promo pricing	US	3	Futures	ATAS, Jigsaw, MotiveWave, NinjaTrader, Quantower, R|Trader Pro, Sierra Chart, TradingView, Tradovate, VolFix, Volsys		
+FundedSeat	https://bit.ly/fundedseat-discounts			false	$650K	0	0	KAGE promo pricing	US	—	Futures	WealthCharts, DeepCharts, TradeSea, Rithmic, Quantower, ATAS		
+FTMO	https://bit.ly/ftmo-discounts			false	$450K	0	0	KAGE promo pricing	CZ	—	Futures	NinjaTrader, Tradovate, TradingView		
+BluSky	https://bit.ly/blusky-discounts			false	$900K	4.7	890	KAGE promo pricing	US	4	Futures	NinjaTrader, Finamark, R|Trader, R|Trader Pro, Tradovate, TradingView, BlackArrow One, Inside Edge Trader, Investor RT, MotiveWave, MultiCharts, Bookmap, Photon, QScalp, QSI Quick Screen Trading, ScalpTool, Trade Navigator, VolFix, Jigsaw, ATAS, Sierra Chart, Quantower		https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Blusky.webp
+FXIFY Futures				false		0	0	KAGE promo pricing	US		Futures	NinjaTrader, Tradovate, TradingView		https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/fxifyfutures.webp
+Earn2Trade				false		0	0	KAGE promo pricing	US		Futures	NinjaTrader, Finamark, R|Trader, R|Trader Pro, Tradovate, TradingView		https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Earn2Trade.webp
