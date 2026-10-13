@@ -5,7 +5,12 @@
  */
 
 import { salePriceOf } from './plan-price.mjs';
+import { exactFirmName } from './firm-identity.mjs';
 
+/**
+ * Rename aliases only. Never map a longer distinct name onto a shorter one
+ * (Tradeify 247 must stay Tradeify 247, not Tradeify).
+ */
 export const FIRM_NAME_MAP = {
   FundedNext: 'FundedNext Futures',
   YRM: 'YRM Prop',
@@ -14,7 +19,16 @@ export const FIRM_NAME_MAP = {
   'The Trading Pit Futures': 'The Trading Pit',
   'Purdia Capital': 'Purdia',
   'FTMO Futures': 'FTMO',
+  Blusky: 'BluSky',
+  BLUSKY: 'BluSky',
+  FXIFY: 'FXIFY Futures',
 };
+
+export function resolveFirmName(raw) {
+  const name = exactFirmName(raw);
+  if (!name) return '';
+  return FIRM_NAME_MAP[name] || name;
+}
 
 export const CORE_HEADERS = [
   'Firm',
@@ -118,6 +132,13 @@ export function parseOptionalNumber(raw) {
   if (!s || /^none$/i.test(s) || s === '—' || s === '-') return null;
   const m = s.match(/([\d.]+)/);
   return m ? Number(m[1]) : null;
+}
+
+export function parsePromoCode(raw) {
+  const s = String(raw || '').trim();
+  if (s === '-' || s === '—') return '-';
+  if (!s || /^none$/i.test(s)) return 'KAGE';
+  return s;
 }
 
 export function normalizeNewsTrading(raw) {
@@ -240,6 +261,15 @@ function parseEnabledCell(raw) {
   return undefined;
 }
 
+/** Blank = auto (coming soon only when the firm has no plans). */
+function parseComingSoonCell(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (!s) return undefined;
+  if (/^(false|no|0|off|n|live|ready|active)$/.test(s)) return false;
+  if (/^(true|yes|1|on|y|soon|coming soon)$/.test(s)) return true;
+  return undefined;
+}
+
 function parseLogoCell(raw) {
   const s = String(raw || '').trim();
   if (/^https?:\/\//i.test(s)) return s;
@@ -298,7 +328,7 @@ export function parseFirmsMetaTsv(text) {
     const cols = lines[i].split('\t');
     const firm = col(cols, idxMap, 'Firm', 0);
     if (!firm) continue;
-    const name = FIRM_NAME_MAP[firm] || firm;
+    const name = resolveFirmName(firm);
     const isPopular = parseBoolCell(col(cols, idxMap, 'isPopular', 4));
     const maxAlloc = col(cols, idxMap, 'Max Allocation', 5);
     const rating = parseNumberCell(col(cols, idxMap, 'Rating', 6));
@@ -309,6 +339,9 @@ export function parseFirmsMetaTsv(text) {
     const platforms = parseListCell(col(cols, idxMap, 'Platforms', 12));
     const enabled = parseEnabledCell(colAny(cols, idxMap, ['Enabled', 'Live', 'Active', 'Show'], 13));
     const logo = parseLogoCell(colAny(cols, idxMap, ['Logo', 'Logo URL', 'Image'], 14));
+    const comingSoon = parseComingSoonCell(
+      colAny(cols, idxMap, ['Coming Soon', 'ComingSoon', 'comingSoon'], 15)
+    );
     map.set(name, {
       affiliateLink: col(cols, idxMap, 'Affiliate Link', 1) || undefined,
       lastVerified: col(cols, idxMap, 'Last Verified', 2) || undefined,
@@ -324,6 +357,7 @@ export function parseFirmsMetaTsv(text) {
       ...(platforms.length ? { platforms } : {}),
       ...(typeof enabled === 'boolean' ? { enabled } : {}),
       ...(logo ? { logo } : {}),
+      ...(typeof comingSoon === 'boolean' ? { comingSoon } : {}),
     });
   }
   return map;
@@ -360,7 +394,7 @@ export function parseTsv(text, { fileLabel = 'firm-plans.tsv' } = {}) {
     const row = {
       line: i + 1,
       firmRaw,
-      firmName: FIRM_NAME_MAP[firmRaw] || firmRaw,
+      firmName: resolveFirmName(firmRaw),
       planType,
       accountSize: col(cols, idxMap, 'Account Size', 2),
       drawdownType: col(cols, idxMap, 'Drawdown Type', 3),
@@ -372,7 +406,7 @@ export function parseTsv(text, { fileLabel = 'firm-plans.tsv' } = {}) {
       payoutFreq: col(cols, idxMap, 'Payout Freq.', 9),
       profitSplit: col(cols, idxMap, 'Profit Split', 10),
       price: col(cols, idxMap, 'Price', 11),
-      promoCode: col(cols, idxMap, 'Promo CODE', 12) || 'KAGE',
+      promoCode: parsePromoCode(col(cols, idxMap, 'Promo CODE', 12)),
       accountCategory: col(cols, idxMap, 'Account Category'),
       minTradingDays: col(cols, idxMap, 'Min Trading Days'),
       dailyDrawdown: col(cols, idxMap, 'Daily Drawdown'),
@@ -561,7 +595,7 @@ export function rowToPlan(row) {
       price: sale,
       priceWas: listPrice || price.priceWas,
       priceType: price.priceType,
-      promoCode: row.promoCode || 'KAGE',
+      promoCode: parsePromoCode(row.promoCode),
       discount: listPrice && listPrice > sale ? 'Promo price with KAGE' : 'KAGE',
     },
   };

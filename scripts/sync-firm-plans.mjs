@@ -72,7 +72,7 @@ const NEW_FIRM_META = {
     reviews: 0,
     description:
       'Futures prop firm with Core, Core DLL, Rapid, Instant, and Instant DLL paths. 80/90% profit split, news trading allowed.',
-    platforms: ['Volumetrica IQC Trader', 'DeepCharts', 'ATAS', 'Quantower'],
+    platforms: ['Quantower', 'Tradovate', 'ATAS', 'DeepCharts'],
     maxAccounts: '10',
     maxAlloc: '$2,000,000',
     promoCode: 'KAGE',
@@ -131,6 +131,73 @@ const NEW_FIRM_META = {
     yearsLabel: '3',
     assets: ['Futures'],
     allocPct: 0.8,
+    isNew: true,
+    isPopular: false,
+  },
+  BluSky: {
+    name: 'BluSky',
+    logo: 'https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Blusky.webp',
+    rating: 4.7,
+    reviews: 890,
+    description: 'Futures prop firm with Launch, Propel, Orbit, and Direct 2 Funded paths.',
+    platforms: ['NinjaTrader', 'Finamark', 'R|Trader', 'R|Trader Pro', 'Tradovate', 'TradingView', 'BlackArrow One', 'Inside Edge Trader', 'Investor RT', 'MotiveWave', 'MultiCharts', 'Bookmap', 'Photon', 'QScalp', 'QSI Quick Screen Trading', 'ScalpTool', 'Trade Navigator', 'VolFix', 'Jigsaw', 'ATAS', 'Sierra Chart', 'Quantower'],
+    maxAccounts: '—',
+    maxAlloc: '$900K',
+    promoCode: 'KAGE',
+    discount: 'KAGE promo pricing',
+    website: 'blusky.pro',
+    affiliateLink: 'https://bit.ly/blusky-discounts',
+    type: 'Challenge',
+    countryCode: 'US',
+    likes: 0,
+    years: 4,
+    yearsLabel: '4',
+    assets: ['Futures'],
+    allocPct: 0.55,
+    isNew: true,
+    isPopular: false,
+  },
+  'FXIFY Futures': {
+    name: 'FXIFY Futures',
+    logo: 'https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/fxifyfutures.webp',
+    rating: 0,
+    reviews: 0,
+    description: 'Futures prop firm with Standard, Expert, and Direct to Sim Live paths.',
+    platforms: ['NinjaTrader', 'Tradovate', 'TradingView'],
+    maxAccounts: '—',
+    maxAlloc: '—',
+    promoCode: 'KAGE',
+    discount: 'KAGE promo pricing',
+    website: 'fxify.com',
+    type: 'Challenge',
+    countryCode: 'US',
+    likes: 0,
+    years: 0,
+    yearsLabel: '—',
+    assets: ['Futures'],
+    allocPct: 0.45,
+    isNew: true,
+    isPopular: false,
+  },
+  Earn2Trade: {
+    name: 'Earn2Trade',
+    logo: 'https://rtzkywwbsldinjgykqag.supabase.co/storage/v1/object/public/genie-assets/firms/Earn2Trade.webp',
+    rating: 0,
+    reviews: 0,
+    description: 'Futures prop firm with Trader Career Path and Gauntlet Mini evaluations.',
+    platforms: ['NinjaTrader', 'Finamark', 'R|Trader', 'R|Trader Pro', 'Tradovate', 'TradingView'],
+    maxAccounts: '—',
+    maxAlloc: '—',
+    promoCode: 'KAGE',
+    discount: 'KAGE promo pricing',
+    website: 'earn2trade.com',
+    type: 'Challenge',
+    countryCode: 'US',
+    likes: 0,
+    years: 0,
+    yearsLabel: '—',
+    assets: ['Futures'],
+    allocPct: 0.5,
     isNew: true,
     isPopular: false,
   },
@@ -250,6 +317,10 @@ function replacePlansInBlock(block, plans) {
   next = next.replace(/priceType:\s*\[[^\]]*\]/, `priceType: ${jsArray(priceTypes)}`);
   if (plans.length) {
     next = next.replace(/comingSoon:\s*true/, 'comingSoon: false');
+  } else if (/comingSoon:/.test(next)) {
+    next = next.replace(/comingSoon:\s*(true|false)/, 'comingSoon: true');
+  } else {
+    next = next.replace(/isPopular:\s*(true|false),/, m => `${m}\n    comingSoon: true,`);
   }
   return next;
 }
@@ -259,9 +330,11 @@ function applyFirmMeta(block, meta) {
   let next = block;
   if (meta.affiliateLink) {
     if (/affiliateLink:/.test(next)) {
-      next = next.replace(/affiliateLink:\s*'[^']*'/, `affiliateLink: ${jsString(meta.affiliateLink)}`);
+      next = next.replace(/affiliateLink:\s*(?:'[^']*'|"[^"]*")/, `affiliateLink: ${jsString(meta.affiliateLink)}`);
+    } else if (/website:\s*(?:'[^']*'|"[^"]*"),/.test(next)) {
+      next = next.replace(/website:\s*(?:'[^']*'|"[^"]*"),/, m => `${m}\n    affiliateLink: ${jsString(meta.affiliateLink)},`);
     } else {
-      next = next.replace(/website:\s*'[^']*',/, m => `${m}\n    affiliateLink: ${jsString(meta.affiliateLink)},`);
+      next = next.replace(/promoCode:\s*(?:'[^']*'|"[^"]*"),/, m => `${m}\n    affiliateLink: ${jsString(meta.affiliateLink)},`);
     }
   }
   if (meta.lastVerified) {
@@ -291,6 +364,13 @@ function applyFirmMeta(block, meta) {
   }
   if (typeof meta.reviews === 'number') {
     next = next.replace(/reviews:\s*\d+/, `reviews: ${meta.reviews}`);
+  }
+  if (typeof meta.comingSoon === 'boolean') {
+    if (/comingSoon:/.test(next)) {
+      next = next.replace(/comingSoon:\s*(true|false)/, `comingSoon: ${meta.comingSoon}`);
+    } else {
+      next = next.replace(/isPopular:\s*(true|false),/, m => `${m}\n    comingSoon: ${meta.comingSoon},`);
+    }
   }
   if (meta.discount) {
     if (/discount:/.test(next)) {
@@ -359,17 +439,22 @@ async function main() {
   ({ found } = extractFirmBlocks(src));
   const existingNames = new Set(found.map(f => f.name));
 
-  const updates = found.filter(f => byFirm.has(f.name)).sort((a, b) => b.start - a.start);
+  const updates = found.slice().sort((a, b) => b.start - a.start);
 
   for (const f of updates) {
-    const plans = byFirm.get(f.name);
-    const popMatch = f.block.match(/popularity:\s*(\d+)/);
-    const likesMatch = f.block.match(/likes:\s*(\d+)/);
-    const pop = Number(popMatch?.[1] || likesMatch?.[1] || 1000);
-    for (const p of plans) p.popularity = pop;
-    let newBlock = replacePlansInBlock(f.block, plans);
+    let newBlock = f.block;
+    if (byFirm.has(f.name)) {
+      const plans = byFirm.get(f.name);
+      const popMatch = f.block.match(/popularity:\s*(\d+)/);
+      const likesMatch = f.block.match(/likes:\s*(\d+)/);
+      const pop = Number(popMatch?.[1] || likesMatch?.[1] || 1000);
+      for (const p of plans) p.popularity = pop;
+      newBlock = replacePlansInBlock(newBlock, plans);
+    } else if (firmMeta.has(f.name)) {
+      newBlock = replacePlansInBlock(newBlock, []);
+    }
     newBlock = applyFirmMeta(newBlock, firmMeta.get(f.name));
-    src = src.slice(0, f.start) + newBlock + src.slice(f.end);
+    if (newBlock !== f.block) src = src.slice(0, f.start) + newBlock + src.slice(f.end);
   }
 
   ({ found } = extractFirmBlocks(src));

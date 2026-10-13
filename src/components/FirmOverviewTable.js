@@ -16,6 +16,8 @@ import { summarizeFirm } from '@/lib/firmOverview';
 import PlatformMarks from '@/components/green/PlatformMarks';
 import { compareFirmNames, defaultSortDir } from '@/lib/firmSort';
 import { salePriceOf } from '@/lib/planPrice';
+import { bindTablePinScroll } from '@/lib/syncTablePins';
+import { colTrack, midTrackPx } from '@/lib/tableColTrack';
 import './FirmOverviewTable.css';
 
 function slugify(name) {
@@ -37,7 +39,6 @@ const MID_COLS = [
   { key: 'activation', label: 'Activation fee', min: 132 },
   { key: 'allIn', label: 'All-in from', min: 104 },
   { key: 'drawdown', label: 'Drawdown type', min: 140 },
-  { key: 'maxLoss', label: 'Max loss', min: 104 },
   { key: 'days', label: 'Days to pass', min: 112 },
   { key: 'news', label: 'News trading', min: 112 },
   { key: 'split', label: 'Profit split', min: 104 },
@@ -66,20 +67,21 @@ function sortLabel(sort) {
   );
 }
 
-const ROW =
-  'ov-row grid w-max min-w-full items-stretch grid-cols-[var(--ov-firm)_max-content_var(--ov-price)]';
+const ROW = 'ov-row';
 const PIN_FIRM =
   'ov-pin-firm flex min-w-0 items-center self-stretch border-r border-white/[0.06]';
 const PIN_ACTION =
   'ov-pin-price flex min-w-0 items-center justify-center self-stretch border-l border-white/[0.06]';
-const PIN_HEAD = 'py-3';
+const PIN_HEAD = 'py-2.5';
 const MID =
   'cmp-mid relative flex min-w-0 items-stretch overflow-visible bg-transparent';
 const MID_CELL_BASE =
   'relative box-border flex h-full shrink-0 self-stretch border-r border-white/[0.06] last:border-r-0 px-3 py-2.5';
 const MID_CELL = `${MID_CELL_BASE} items-center justify-center`;
 const TH =
-  'min-h-[40px] flex-col items-center justify-center gap-0.5 whitespace-nowrap text-center text-[0.62rem] font-semibold uppercase tracking-[0.04em] text-slate-400/90';
+  'min-h-[40px] flex-col items-center justify-center gap-0.5 whitespace-nowrap text-center text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-slate-400';
+const TOOL_CHIP =
+  'btn-bare inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold max-md:h-8 max-md:gap-1 max-md:px-2 max-md:text-[0.68rem]';
 const CHIP_ON = 'border-[#3FB185]/50 bg-[#3FB185]/15 text-[#3FB185]';
 const CHIP_OFF = 'border-white/10 bg-black/20 text-slate-200 hover:border-emerald-500/35';
 
@@ -94,7 +96,6 @@ const INFO = {
   activation: 'Compact fee in the cell (None, one fee, or a range). Open the row’s i button for every plan.',
   allIn: 'Cheapest eval plus that path’s activation fee, when the fee is a number.',
   drawdown: 'Drawdown styles across this firm’s plans.',
-  maxLoss: 'Max loss range across account sizes.',
   days: 'Minimum trading days required to pass, if the firm sets one.',
   news: 'News trading: allowed, not allowed, or mixed by plan.',
   split: 'Trader profit split across plans.',
@@ -509,7 +510,6 @@ function sortValue(key, row) {
   }
   if (key === 'allIn') return row.allIn || 0;
   if (key === 'drawdown') return String(row.drawdownLabel || '');
-  if (key === 'maxLoss') return numFrom(row.maxLossLabel);
   if (key === 'days') return numFrom(row.daysToPass);
   if (key === 'news') {
     if (row.news === 'Allowed') return 2;
@@ -522,6 +522,52 @@ function sortValue(key, row) {
   if (key === 'discount') return numFrom(row.discountLabel);
   if (key === 'description') return String(f?.description || '');
   return Number(f?.likes) || 0;
+}
+
+function OverviewHeadRow({ sort, cycleSort, visibleMidCols, colMin }) {
+  return (
+    <div className={`${ROW} ov-row--head`} role="row">
+      <div className={`${PIN_FIRM} ${PIN_HEAD} bg-[#060c0a]`} role="columnheader">
+        <button
+          type="button"
+          className="btn-bare inline-flex items-center gap-0.5 pl-2 text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-slate-400 sm:pl-4"
+          onClick={() => cycleSort('firm')}
+        >
+          Firm
+          <SortArrows active={sort.key === 'firm'} direction={sort.dir} />
+        </button>
+      </div>
+      <div className={`${MID} ${PIN_HEAD} bg-[#060c0a]`} role="presentation">
+        <div className="ov-mid-track h-full">
+          {visibleMidCols.map(col => (
+            <div
+              key={col.key}
+              className={`${MID_CELL} ${TH} whitespace-nowrap`}
+              style={colTrack(colMin(col))}
+            >
+              <span className="inline-flex items-center gap-0.5">
+                <button
+                  type="button"
+                  className="btn-bare inline-flex items-center gap-0.5 uppercase"
+                  onClick={() => cycleSort(col.key)}
+                >
+                  <HeadLabel label={col.label} label2={col.label2} />
+                  <SortArrows active={sort.key === col.key} direction={sort.dir} />
+                </button>
+                <InfoTip text={INFO[col.key]} />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        className={`${PIN_ACTION} ${PIN_HEAD} justify-center bg-[#060c0a] text-center text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-slate-400`}
+        role="columnheader"
+      >
+        View Firm
+      </div>
+    </div>
+  );
 }
 
 export default function FirmOverviewTable({ firms: catalog = [] }) {
@@ -547,17 +593,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
   const boardRef = useRef(null);
   const headRailRef = useRef(null);
 
-  useEffect(() => {
-    const board = boardRef.current;
-    const rail = headRailRef.current;
-    if (!board || !rail) return undefined;
-    const sync = () => {
-      rail.scrollLeft = board.scrollLeft;
-    };
-    sync();
-    board.addEventListener('scroll', sync, { passive: true });
-    return () => board.removeEventListener('scroll', sync);
-  }, []);
+  useEffect(() => bindTablePinScroll(boardRef.current, headRailRef.current), []);
 
   useEffect(() => {
     try {
@@ -587,10 +623,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
     localStorage.setItem(COLS_KEY, JSON.stringify([...visibleCols]));
   }, [visibleCols]);
 
-  const firmList = useMemo(
-    () => catalog.filter(f => (f.plans || []).length || f.comingSoon),
-    [catalog]
-  );
+  const firmList = useMemo(() => catalog, [catalog]);
 
   const filterOptions = useMemo(() => {
     const sizes = new Set();
@@ -679,6 +712,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
 
   const visibleMidCols = MID_COLS.filter(c => visibleCols.has(c.key));
   const colMin = col => (isMobile ? Math.max(108, Math.round(col.min * 0.9)) : col.min);
+  const midPx = midTrackPx(visibleMidCols, colMin);
 
   const cycleSort = key => {
     setSort(prev => {
@@ -703,7 +737,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
     spotA && spotB ? `/compare?a=${slugify(spotA)}&b=${slugify(spotB)}` : null;
 
   const renderMid = (col, row) => {
-    const style = { flex: `0 0 ${colMin(col)}px`, minWidth: colMin(col) };
+    const style = colTrack(colMin(col));
     const wrap = `${MID_CELL_BASE} min-h-[88px] items-center justify-center text-center text-[0.82rem] font-bold leading-snug text-slate-50`;
     switch (col.key) {
       case 'size':
@@ -757,12 +791,6 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
             <span className="whitespace-normal break-words text-center">{row.drawdownLabel}</span>
           </div>
         );
-      case 'maxLoss':
-        return (
-          <div key={col.key} className={wrap} style={style}>
-            <span className="whitespace-normal break-words text-center">{row.maxLossLabel}</span>
-          </div>
-        );
       case 'days':
         return (
           <div key={col.key} className={wrap} style={style}>
@@ -803,7 +831,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
         const open = expanded.has(row.firm.name);
         const text = row.firm.description || '—';
         return (
-          <div key={col.key} className={`${MID_CELL} min-h-[88px] max-w-72 flex-col items-center justify-center text-center`} style={style}>
+          <div key={col.key} className={`${MID_CELL} min-h-[88px] flex-col items-center justify-center text-center`} style={style}>
             <p className={`m-0 text-[0.75rem] font-medium leading-snug text-slate-300 ${open ? '' : 'line-clamp-2'}`}>
               {text}
             </p>
@@ -832,8 +860,8 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
   };
 
   return (
-    <div className="relative w-full font-[family-name:var(--font-body)]">
-      <div className="flex w-full items-start">
+    <div className="ov-page relative w-full font-[family-name:var(--font-body)]">
+      <div className="flex min-h-0 w-full flex-1 items-start">
         <div className="ov-no-print">
         <CompareFilterSidebar
           open={sidebarOpen}
@@ -855,10 +883,10 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
         />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="ov-workbench" ref={workbenchRef}>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="ov-workbench" ref={workbenchRef} style={{ '--ov-mid': `${midPx}px` }}>
           <div className="ov-sticky-top">
-          <div className="ov-chrome ov-no-print flex flex-col gap-3 rounded-t-2xl border border-white/10 border-b-[#3FB185]/25 px-4 py-3 sm:px-[18px] sm:py-3.5 max-md:gap-1.5 max-md:px-1.5 max-md:py-1.5">
+          <div className="ov-chrome ov-no-print flex flex-col gap-3 rounded-none border border-x-0 border-white/10 border-b-[#3FB185]/25 px-1.5 py-1.5 md:gap-3 md:rounded-t-2xl md:border-x md:px-4 md:py-3 lg:px-[18px] lg:py-3.5">
             <div className="ov-spotlight flex min-w-0 flex-wrap items-end gap-2 rounded-2xl border border-[#3FB185]/40 bg-[#07140f] px-3.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.35)] max-md:gap-1 max-md:rounded-lg max-md:px-1.5 max-md:py-1.5">
               <p className="m-0 w-full text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[#3FB185]/80 max-md:hidden">Spotlight two firms</p>
               <FirmSpot
@@ -903,8 +931,8 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
               <div className="ov-toolbar-row">
               <button
                 type="button"
-                className={`btn-bare relative inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[0.78rem] font-semibold max-md:h-8 max-md:gap-1 max-md:rounded-lg max-md:px-2 max-md:text-[0.68rem] ${
-                  sidebarOpen ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]' : 'border-white/10 bg-white/5 text-white/80'
+                className={`${TOOL_CHIP} relative ${
+                  sidebarOpen ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]' : 'border-white/10 bg-white/10 text-white/80'
                 }`}
                 onClick={() => setSidebarOpen(v => !v)}
                 aria-pressed={sidebarOpen}
@@ -940,8 +968,8 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
               </label>
               <button
                 type="button"
-                className={`btn-bare inline-flex h-10 items-center rounded-full px-5 text-[0.82rem] font-bold max-md:h-8 max-md:px-2.5 max-md:text-[0.68rem] ${
-                  topMode === 'all' ? 'bg-[#3FB185] text-[#0a0f0d]' : 'border border-white/10 bg-white/5 text-white/80'
+                className={`btn-bare inline-flex h-9 items-center rounded-full px-5 text-xs font-bold max-md:h-8 max-md:px-2.5 max-md:text-[0.68rem] ${
+                  topMode === 'all' ? 'border border-transparent bg-[#3FB185] text-[#0a0f0d]' : 'border border-white/10 bg-white/10 text-white/80'
                 }`}
                 onClick={() => setTopMode('all')}
               >
@@ -949,17 +977,17 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
               </button>
               <button
                 type="button"
-                className={`btn-bare inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[0.78rem] font-semibold max-md:h-8 max-md:gap-1 max-md:rounded-lg max-md:px-2 max-md:text-[0.68rem] ${
+                className={`${TOOL_CHIP} ${
                   topMode === 'favorites'
                     ? 'border-[#3FB185]/60 bg-[#3FB185]/15 text-[#3FB185]'
-                    : 'border-white/10 bg-white/5 text-white/80'
+                    : 'border-white/10 bg-white/10 text-white/80'
                 }`}
                 onClick={() => setTopMode(m => (m === 'favorites' ? 'all' : 'favorites'))}
               >
                 <Bookmark size={14} />
                 {favorites.size}/{MAX_FAVORITES}
               </button>
-              <p className="m-0 shrink-0 text-[0.92rem] font-semibold text-[#3FB185] max-md:text-[0.68rem]">
+              <p className="m-0 shrink-0 text-sm font-semibold text-[#3FB185] max-md:text-[0.68rem]">
                 {sorted.length.toLocaleString('en-US')} firms
               </p>
               </div>
@@ -998,7 +1026,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                   <Search size={14} />
                 </button>
               )}
-              <label className="ml-auto hidden h-10 w-[min(100%,220px)] min-w-[160px] items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 focus-within:border-[#3FB185]/45 md:flex">
+              <label className="ml-auto hidden h-9 w-[min(100%,220px)] min-w-[160px] items-center gap-2 rounded-full border-0 bg-white/10 px-4 focus-within:bg-white/[0.14] md:flex">
                 <input
                   type="text"
                   className="min-w-0 flex-1 border-0 bg-transparent text-[0.82rem] text-white outline-none placeholder:text-white/35"
@@ -1085,55 +1113,18 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
             </div>
           </div>
           <div className="ov-head-rail scrollbar-none" ref={headRailRef}>
-            <div className={`${ROW} ov-row--head`} role="row">
-              <div className={`${PIN_FIRM} ${PIN_HEAD} bg-[#060c0a]`} role="columnheader">
-                <button
-                  type="button"
-                  className="btn-bare inline-flex items-center gap-0.5 pl-2 text-[0.62rem] font-semibold uppercase tracking-[0.06em] text-slate-400/90 sm:pl-4"
-                  onClick={() => cycleSort('firm')}
-                >
-                  Firm
-                  <SortArrows active={sort.key === 'firm'} direction={sort.dir} />
-                </button>
-              </div>
-              <div className={`${MID} ${PIN_HEAD} bg-[#060c0a]`} role="presentation">
-                <div className="flex h-full w-max items-stretch">
-                  {visibleMidCols.map(col => (
-                    <div
-                      key={col.key}
-                      className={`${MID_CELL} ${TH} whitespace-nowrap`}
-                      style={{ flex: `0 0 ${colMin(col)}px`, minWidth: colMin(col) }}
-                    >
-                      <span className="inline-flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          className="btn-bare inline-flex items-center gap-0.5 uppercase"
-                          onClick={() => cycleSort(col.key)}
-                        >
-                          <HeadLabel label={col.label} label2={col.label2} />
-                          <SortArrows active={sort.key === col.key} direction={sort.dir} />
-                        </button>
-                        <InfoTip text={INFO[col.key]} />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div
-                className={`${PIN_ACTION} ${PIN_HEAD} justify-center bg-[#060c0a] text-center text-[0.62rem] font-semibold uppercase tracking-[0.06em] text-slate-400/90`}
-                role="columnheader"
-              >
-                View Firm
-              </div>
-            </div>
+            <OverviewHeadRow sort={sort} cycleSort={cycleSort} visibleMidCols={visibleMidCols} colMin={colMin} />
           </div>
           </div>
 
           <div className="ov-board-clip">
           <div
             ref={boardRef}
-            className="ov-board scrollbar-none rounded-b-2xl border border-t-0 border-white/10 bg-[#060c0a]"
+            className="ov-board scrollbar-none rounded-none border border-x-0 border-t-0 border-white/10 bg-[#060c0a] md:rounded-b-2xl md:border-x"
           >
+            <div className="ov-board-head">
+              <OverviewHeadRow sort={sort} cycleSort={cycleSort} visibleMidCols={visibleMidCols} colMin={colMin} />
+            </div>
             {sorted.length === 0 ? (
               <p className="px-5 py-10 text-center text-sm text-white/45">No firms match these filters.</p>
             ) : (
@@ -1145,7 +1136,14 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                   <div key={f.name} className={`${ROW} group ${even ? 'ov-row--even' : ''}`} role="row">
                     <div className={`${PIN_FIRM}`} role="cell">
                       <div className="flex w-full min-w-0 items-center gap-3.5">
-                        <div className="ov-firm-logo relative shrink-0" style={{ width: 44, height: 44 }}>
+                        {row.genieUrl ? (
+                          <a
+                            href={row.genieUrl}
+                            className="ov-firm-link flex min-w-0 flex-1 items-center gap-3.5 no-underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <div className="ov-firm-logo relative shrink-0" style={{ width: 44, height: 44 }}>
                           <div
                             className="overflow-hidden bg-black"
                             style={{
@@ -1169,18 +1167,16 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                               <Star size={9} fill="#fff" />
                             </span>
                           ) : null}
-                        </div>
-                        <div className="ov-firm-meta flex min-w-0 flex-1 flex-col items-start justify-center gap-1">
-                          <span className="block w-full truncate text-[0.95rem] font-bold leading-tight text-slate-50">
+                            </div>
+                            <div className="ov-firm-meta flex min-w-0 flex-1 flex-col items-start justify-center gap-1">
+                          <span className="ov-firm-name block w-full text-[0.95rem] font-bold leading-tight text-slate-50">
                             {f.name}
                           </span>
                           <span className="ov-plans block text-xs font-semibold leading-snug text-[#3FB185]/85">
                             {row.comingSoon ? 'Coming soon' : `${row.planCount} plans`}
                           </span>
                           <div className="flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                            {f.reviews < 10 ? (
-                              <span className="text-[0.7rem] font-semibold text-[#3FB185]">Less than 10 reviews</span>
-                            ) : (
+                            {Number(f.rating) > 0 ? (
                               <>
                                 <span className="shrink-0 text-xs font-bold tabular-nums text-white">
                                   {Number(f.rating).toFixed(1)}
@@ -1192,9 +1188,13 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                                   [{Number(f.reviews).toLocaleString('en-US')}]
                                 </span>
                               </>
+                            ) : (
+                              <span className="text-[0.7rem] font-semibold text-white/35">No reviews</span>
                             )}
                           </div>
                         </div>
+                          </a>
+                        ) : null}
                         <button
                           type="button"
                           className={`ov-fav btn-bare grid size-7 shrink-0 place-items-center rounded-lg ${
@@ -1208,7 +1208,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                       </div>
                     </div>
                     <div className={`${MID}`}>
-                      <div className="flex h-full min-h-[88px] w-max items-stretch">
+                      <div className="ov-mid-track h-full min-h-[88px]">
                         {visibleMidCols.map(col => renderMid(col, row))}
                       </div>
                     </div>
@@ -1217,7 +1217,7 @@ export default function FirmOverviewTable({ firms: catalog = [] }) {
                         <PfgPrimary
                           href={row.genieUrl}
                           compact
-                          className="ov-view-btn h-8 rounded-full! px-3.5"
+                          className="ov-view-btn h-8 rounded-full px-3.5 max-md:h-6 max-md:max-w-full max-md:min-w-0 max-md:shrink max-md:px-1.5"
                           target="_blank"
                           rel="noopener noreferrer"
                         >

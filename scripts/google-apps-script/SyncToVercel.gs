@@ -9,6 +9,7 @@
  * 5. PropFirm Sync → Sync sheet → site now
  *
  * IMPORTANT: Do NOT click Google Sheets "Convert to table".
+ * Firm names are exact IDs. "Tradeify" and "Tradeify 247" are two firms.
  */
 
 const SYNC_URL = 'https://propfirm-genie-two.vercel.app/api/sync-firms';
@@ -64,6 +65,7 @@ const FIRMS_HEADERS = [
   'Platforms',
   'Enabled',
   'Logo',
+  'Coming Soon',
 ];
 
 const EXPECTED_HEADERS = CORE_HEADERS.concat(EXTENDED_HEADERS);
@@ -220,7 +222,7 @@ function ensureOfferAndInfoColumns() {
       (firmsMissing.length ? firmsMissing.join(', ') : 'none') +
       '\n\nOffer = picker promo line (e.g. 25% OFF - code KAGE).' +
       '\nInfo = extra note in the Plans (i) popup. Plan Type + Account Size still fill the list.' +
-      '\nFirms: Country, Years, Assets, Platforms. Enabled = YES/NO (blank = show). Logo = paste a public Supabase image URL.'
+      '\nFirms: Country, Years, Assets, Platforms. Enabled = YES/NO (blank = show). Coming Soon = YES/NO (blank = auto: soon if no plans). Logo = paste a public Supabase image URL.'
   );
 }
 

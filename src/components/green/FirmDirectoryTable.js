@@ -9,6 +9,8 @@ import { firmLogo } from '@/lib/firmLogos';
 import { compareFirmNames } from '@/lib/firmSort';
 import PlatformMarks from '@/components/green/PlatformMarks';
 import { PfgGhost, PfgPrimary } from '@/components/green/PfgControls';
+import { bindTablePinScroll } from '@/lib/syncTablePins';
+import { genieFirmUrl } from '@/lib/firmGenie';
 import './FirmDirectoryTable.css';
 
 const BTN =
@@ -18,8 +20,7 @@ const STAR =
 const MAX_FAVORITES = 5;
 const PAGE_SIZE = 10;
 const FAV_KEY = 'demo4-favs';
-const COLS =
-  'dir-cols grid min-w-[1220px] grid-cols-[minmax(200px,1.15fr)_minmax(128px,0.85fr)_minmax(110px,0.75fr)_72px_minmax(132px,0.9fr)_minmax(118px,0.8fr)_minmax(96px,0.7fr)_118px_132px] items-center gap-x-3';
+const COLS = 'dir-cols';
 
 const FLAGS = { US: '🇺🇸', AE: '🇦🇪', CY: '🇨🇾', CZ: '🇨🇿', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺', LC: '🇱🇨' };
 const NUMERIC_SORT = new Set(['reviews', 'years', 'alloc', 'platforms', 'promo']);
@@ -41,8 +42,15 @@ function compactNum(n) {
   return v.toLocaleString('en-US');
 }
 
+function firmPromoCode(firm) {
+  const codes = [...new Set((firm.plans || []).map(p => String(p.promoCode || '').trim()).filter(Boolean))];
+  if (codes.length === 1) return codes[0];
+  if (codes.length && codes.every(c => c === '-' || c === '—')) return '-';
+  return firm.promoCode || 'KAGE';
+}
+
 function isComingSoon(firm) {
-  return Boolean(firm.comingSoon) && !(firm.plans || []).length;
+  return Boolean(firm.comingSoon);
 }
 
 function promoLabel(firm) {
@@ -196,9 +204,9 @@ function SortHead({ label, col, sort, dir, onSort, align = 'center' }) {
   return (
     <button
       type="button"
-      className={`${BTN} inline-flex w-full items-center gap-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] ${
+      className={`${BTN} inline-flex w-full items-center gap-1 text-[0.72rem] font-semibold uppercase tracking-[0.05em] ${
         align === 'left' ? 'justify-start text-left' : 'justify-center text-center'
-      } ${on ? 'text-white/80!' : 'text-white/35! hover:text-white/65!'}`}
+      } ${on ? 'text-slate-200!' : 'text-slate-400! hover:text-slate-200!'}`}
       aria-pressed={on}
       onClick={() => onSort(col)}
     >
@@ -217,7 +225,7 @@ function Chip({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`${BTN} inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[0.78rem] font-semibold max-md:gap-0.5 max-md:px-2 max-md:py-1 max-md:text-[0.62rem] ${
+      className={`${BTN} inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold max-md:h-8 max-md:gap-0.5 max-md:px-2 max-md:text-[0.62rem] ${
         active
           ? 'border-[#3FB185]/70 bg-[#3FB185]/15 text-white'
           : 'border-white/12 bg-white/4 text-white/75 hover:border-white/20'
@@ -247,6 +255,30 @@ function FacetChip({ active, onClick, children }) {
 
 const ROW_TONE = 'border-white/10 bg-[#0c1612]';
 
+function DirectoryHead({ sort, dir, onSort }) {
+  return (
+    <div className="dir-head px-3 py-2.5">
+      <div className={COLS}>
+        <div className="dir-pin-firm">
+          <SortHead label="Firm" col="name" sort={sort} dir={dir} onSort={onSort} align="left" />
+        </div>
+        <SortHead label="Reviews" col="reviews" sort={sort} dir={dir} onSort={onSort} />
+        <SortHead label="Country" col="country" sort={sort} dir={dir} onSort={onSort} />
+        <SortHead label="Years in operation" col="years" sort={sort} dir={dir} onSort={onSort} />
+        <SortHead label="Assets" col="assets" sort={sort} dir={dir} onSort={onSort} />
+        <SortHead label="Platforms" col="platforms" sort={sort} dir={dir} onSort={onSort} />
+        <SortHead label="Max allocations" col="alloc" sort={sort} dir={dir} onSort={onSort} />
+        <div className="dir-cta">
+          <SortHead label="Promo" col="promo" sort={sort} dir={dir} onSort={onSort} />
+          <span className="w-full text-center text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-slate-400">
+            View Firm
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FirmDirectoryTable({ firms = staticFirms }) {
   const [mode, setMode] = useState('all');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -264,17 +296,7 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
   const boardRef = useRef(null);
   const headRailRef = useRef(null);
 
-  useEffect(() => {
-    const board = boardRef.current;
-    const rail = headRailRef.current;
-    if (!board || !rail) return undefined;
-    const sync = () => {
-      rail.scrollLeft = board.scrollLeft;
-    };
-    sync();
-    board.addEventListener('scroll', sync, { passive: true });
-    return () => board.removeEventListener('scroll', sync);
-  }, []);
+  useEffect(() => bindTablePinScroll(boardRef.current, headRailRef.current), []);
 
   useEffect(() => {
     try {
@@ -407,10 +429,10 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
   };
 
   return (
-    <div className="w-full">
+    <div className="dir-page w-full">
       <div className="dir-workbench">
       <div className="dir-sticky-top">
-      <div className="dir-chrome rounded-t-2xl border border-white/10 border-b-[#3FB185]/25 px-4 py-3 sm:px-[18px] sm:py-3.5 max-md:px-1.5 max-md:py-1.5">
+      <div className="dir-chrome rounded-none border border-x-0 border-white/10 border-b-[#3FB185]/25 px-1.5 py-1.5 md:rounded-t-2xl md:border-x md:px-4 md:py-3 lg:px-[18px] lg:py-3.5">
       <div className="dir-chrome-bar flex flex-nowrap items-center gap-2 max-md:gap-1">
         <button
           type="button"
@@ -562,35 +584,24 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
       ) : null}
       </div>
       <div className="dir-head-rail scrollbar-none" ref={headRailRef}>
-        <div className="dir-head px-3 pb-2 pt-1">
-          <div className={COLS}>
-            <SortHead label="Firm" col="name" sort={sort} dir={dir} onSort={onSort} align="left" />
-            <SortHead label="Reviews" col="reviews" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Country" col="country" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Years in operation" col="years" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Assets" col="assets" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Platforms" col="platforms" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Max allocations" col="alloc" sort={sort} dir={dir} onSort={onSort} />
-            <SortHead label="Promo" col="promo" sort={sort} dir={dir} onSort={onSort} />
-            <span className="w-full text-center text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-white/35">
-              View Firm
-            </span>
-          </div>
-        </div>
+        <DirectoryHead sort={sort} dir={dir} onSort={onSort} />
       </div>
       </div>
 
       <div
-        className="dir-board scrollbar-none rounded-b-2xl border border-t-0 border-white/10"
+        className="dir-board scrollbar-none rounded-none border border-x-0 border-t-0 border-white/10 md:rounded-b-2xl md:border-x"
         ref={boardRef}
       >
-        <div className="px-3 pb-3 pt-2">
+        <div className="dir-board-pad px-3 pb-3 pt-2">
+        <div className="dir-board-head">
+          <DirectoryHead sort={sort} dir={dir} onSort={onSort} />
+        </div>
         {visible.length === 0 ? (
           <p className="rounded-2xl border border-white/10 bg-[#0c1612] px-5 py-10 text-center text-sm text-white/45">
             {mode === 'favorites' ? 'No favorites yet. Heart a firm to pin it here (max 5).' : 'No firms match this filter.'}
           </p>
         ) : (
-          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          <ul className="dir-list m-0 flex list-none flex-col gap-2.5 p-0">
             {visible.map((f, i) => {
               const href = f.affiliateLink || (f.website ? `https://${f.website}` : '#');
               const off = promoLabel(f);
@@ -600,32 +611,42 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
               const copied = copiedFirm === f.name;
               const logoSrc = firmLogo(f.name, f.logo);
               const coming = isComingSoon(f);
+              const promoCode = firmPromoCode(f);
               return (
-                <li key={f.name} className={`dir-row rounded-xl border px-2 py-2.5 sm:rounded-2xl sm:px-3 sm:py-3 max-md:px-1.5 max-md:py-1.5 ${ROW_TONE}`}>
+                <li key={f.name} className={`dir-row rounded-xl border px-2 py-2.5 sm:rounded-2xl sm:px-3 sm:py-3 max-md:px-1.5 max-md:py-1.5 ${ROW_TONE} ${i % 2 ? 'dir-row--even' : ''}`}>
                   <div className={COLS}>
-                    <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="dir-pin-firm flex min-w-0 items-center gap-2.5">
+                      <a
+                        href={genieFirmUrl(f.name)}
+                        className="dir-firm-link flex min-w-0 flex-1 items-center gap-2.5 no-underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                       <FirmMark src={logoSrc} name={f.name} eager={i < 4} />
                       <div className="min-w-0">
-                        <div className="truncate text-[0.92rem] font-bold text-white">{f.name}</div>
+                        <div className="dir-firm-name text-[0.92rem] font-bold text-white">{f.name}</div>
                         {coming ? (
                           <div className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[#3FB185]/80">
                             Coming soon
                           </div>
                         ) : (
                           <div className="mt-0.5 flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              className={`${BTN} text-[#3FB185]!`}
-                              aria-pressed={liked}
-                              aria-label={liked ? `Remove ${f.name} from favorites` : `Save ${f.name} to favorites`}
-                              onClick={() => toggleFavorite(f.name)}
-                            >
-                              <Heart size={13} className={liked ? 'fill-[#3FB185]' : ''} />
-                            </button>
                             <span className="text-[0.68rem] tabular-nums text-white/40">{compactNum(f.likes)}</span>
                           </div>
                         )}
                       </div>
+                      </a>
+                      {coming ? null : (
+                        <button
+                          type="button"
+                          className={`${BTN} shrink-0 text-[#3FB185]!`}
+                          aria-pressed={liked}
+                          aria-label={liked ? `Remove ${f.name} from favorites` : `Save ${f.name} to favorites`}
+                          onClick={() => toggleFavorite(f.name)}
+                        >
+                          <Heart size={13} className={liked ? 'fill-[#3FB185]' : ''} />
+                        </button>
+                      )}
                     </div>
 
                     <div className="flex flex-col items-center justify-center gap-0.5 text-center">
@@ -675,7 +696,8 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
                       </div>
                     </div>
 
-                    <div className="overflow-hidden rounded-xl border border-dashed border-[#3FB185]/35">
+                    <div className="dir-cta">
+                    <div className="dir-promo overflow-hidden rounded-xl border border-dashed border-[#3FB185]/35">
                       <div className="bg-[#3FB185] px-2 py-1 text-center text-[0.68rem] font-bold text-[#0a0f0d]">
                         {off || 'Deal'}
                       </div>
@@ -683,19 +705,23 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
                         <div className="bg-[#08120e] px-2 py-1.5 text-center text-[0.7rem] font-bold text-white/50">
                           Soon
                         </div>
-                      ) : (
+                      ) : String(promoCode || '').trim() && String(promoCode).trim() !== '-' ? (
                         <button
                           type="button"
                           className={`${BTN} flex w-full items-center justify-center gap-1 bg-[#08120e]! px-2 py-1.5 text-[0.7rem] font-bold text-white! hover:bg-[#0e1c16]!`}
-                          onClick={() => copyCode(f.name, f.promoCode)}
+                          onClick={() => copyCode(f.name, promoCode)}
                         >
                           {copied ? <Check size={11} /> : <Copy size={11} />}
-                          {copied ? 'Copied' : f.promoCode}
+                          {copied ? 'Copied' : promoCode}
                         </button>
+                      ) : (
+                        <div className="bg-[#08120e] px-2 py-1.5 text-center text-[0.7rem] font-bold text-white/50">
+                          –
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex justify-center">
+                    <div className="dir-visit flex justify-center">
                       {coming ? (
                         <PfgGhost disabled className="min-h-8 cursor-default px-3 py-1.5 text-[0.75rem] opacity-60">
                           Coming soon
@@ -711,6 +737,7 @@ export default function FirmDirectoryTable({ firms = staticFirms }) {
                           View Firm
                         </PfgPrimary>
                       )}
+                    </div>
                     </div>
                   </div>
                 </li>
