@@ -18,7 +18,12 @@ import {
 export const FIRMS_SHEET_TAG = 'firms-sheet';
 
 /** Firms removed from all live pages — filtered from runtime catalog. */
-export const HIDDEN_FIRMS = new Set(['One Up Trader', 'YRM Prop']);
+export const HIDDEN_FIRMS = new Set([
+  'One Up Trader',
+  'YRM Prop',
+  'FundedSeat',
+  'Nexgen ProTrader Funding',
+]);
 
 function withoutHiddenFirms(firms) {
   return firms.filter(f => !HIDDEN_FIRMS.has(f.name) && f.enabled !== false);

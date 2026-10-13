@@ -18,9 +18,9 @@ The `Firm` cell (after trim) is the ID. Similar names are **not** merged.
 | Sheet | Site |
 |---|---|
 | `Tradeify` | Tradeify (futures) |
-| `Tradeify 247` | Tradeify 247 (crypto) — different firm |
+| `Tradeify 247` | Tradeify 247 (crypto). Different firm. |
 | `My Funded Futures` | My Funded Futures |
-| `My Funded Perps` | My Funded Perps — different firm |
+| `My Funded Perps` | My Funded Perps. Different firm. |
 | `Vest Markets` | Vest Markets |
 
 Do **not** use `startsWith("Tradeify")` or map `Tradeify 247` → `Tradeify`.  
